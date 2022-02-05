@@ -1,0 +1,137 @@
+
+[build-system]
+requires = ["setuptools", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "atompy"
+version = "1.0.1"
+description = "Atom Common Library for Python."
+readme = "README.md"
+keywords = ["atom", "common"]
+
+
+
+# *mypy* `https://mypy.readthedocs.io/en/stable/config_file.html`
+[tool.mypy]
+python_version = 3.9
+files = ["src/**/*.py","tests/**/*.py"]
+warn_return_any = true
+warn_unused_configs = true
+ignore_missing_imports = true
+disallow_untyped_defs = true
+# exclude = _*./*.py
+plugins = ["sqlmypy"]
+
+
+# *pylint* `http://pylint.pycqa.org/en/latest/user_guide/run.html`
+
+[tool.pylint.MASTER]
+# A comma-separated list of package or module names from where C extensions may
+# be loaded. Extensions are loading into the active Python interpreter and may
+# run arbitrary code.
+extension-pkg-whitelist = ""
+
+# Allow loading of arbitrary C extensions. Extensions are imported into the
+# active Python interpreter and may run arbitrary code.
+unsafe-load-any-extension = "yes"
+
+[tool.pylint.messages_control]
+
+max-line-length = 88
+
+disable = [
+  "no-value-for-parameter",
+  # "no-member",
+  "line-too-long",
+  "too-few-public-methods",
+]
+
+[tool.pylint.design]
+# limiting the number of returns might discourage
+# the use of guard clauses. So we increase the
+# allowed number of returns from 6 to 8
+max-returns = 8
+max-args = 10
+max-attributes = 20
+max-public-methods = 30
+
+
+[tool.pylint.format]
+max-module-lines = 1000
+
+
+[tool.pylint.TYPECHECK]
+generated-members = ["numpy", "orjson", "sqlalchemy", "selectolax", "transformers"]
+ignored-modules = ["sqlalchemy"]
+
+
+
+[tool.flake8]
+max-line-length = 88
+max-complexity = 10
+select = ["B", "C", "E", "F", "W", "T4"]
+extend-ignore = ["E203", "E266", "E501", "W503", "W504"]
+# exclude = [".git", "__pycache__", "_*/", "docs", "data", "vars", "_bak"]
+exclude = ".git, .mypy_cache, .pytest_cache, __pycache__, build, dist"
+
+
+
+[tool.black]
+line-length = 88
+target-version = ["py37", "py38", "py39"]
+include = '\.pyi?$'
+extend-exclude = '''
+# A regex preceded with ^/ will apply only to files and directories
+# in the root of the project.
+^/foo.py  # exclude a file named foo.py in the root of the project (in addition to the defaults)
+'''
+
+
+[tool.isort]
+profile = "black"
+src_paths = ["src", "tests"]
+multi_line_output = 3
+include_trailing_comma=true
+force_grid_wrap=0
+use_parentheses=true
+line_length=88
+
+
+[tool.pytest.ini_options]
+minversion = "6.0"
+addopts = "-ra -q"
+testpaths = [
+    "tests",
+]
+
+
+[tool.coverage.run]
+branch = true
+# source = src
+
+[tool.coverage.report]
+# Regexes for lines to exclude from consideration
+# exclude_lines =
+    # Have to re-enable the standard pragma
+#    "pragma: no cover"
+
+    # Don't complain about missing debug-only code:
+#    "def __repr__"
+#    "if self\.debug"
+
+    # Don't complain if tests don't hit defensive assertion code:
+#    "raise AssertionError"
+#    "raise NotImplementedError"
+
+    # Don't complain if non-runnable code isn't run:
+#    "if 0:"
+#    "if __name__ == .__main__.:"
+
+    # Don't complain about abstract methods, they aren't run:
+#    "@(abc\.)?abstractmethod"
+
+ignore_errors = true
+
+[tool.coverage.html]
+directory = "coverage_html_report"
