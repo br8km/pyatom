@@ -3,7 +3,9 @@
         - http requests client
         - chrome headless anti-fingerprint browser client
 """
+
 import os
+from abc import ABC
 from pathlib import Path
 from typing import Any, Optional, Union
 
@@ -12,9 +14,9 @@ import orjson
 import requests
 from requests import Response
 
-from .io import load_dict, save_dict
-from .debug import Debugger
-from .log import Logger
+from pyatom.base.io import load_dict, save_dict
+from pyatom.base.debug import Debugger
+from pyatom.base.log import Logger
 
 
 __all__ = (
@@ -23,16 +25,14 @@ __all__ = (
 )
 
 
-class BaseClient:
+class BaseClient(ABC):
     """Base cls for Browser Client."""
 
     __slots__ = (
         "__dict__",
         "user_agent",
         "proxy_str",
-        "demo",
-        "name",
-        "timeout",
+        "time_out",
         "logger",
         "debugger",
         "data",
@@ -42,33 +42,19 @@ class BaseClient:
         self,
         user_agent: str,
         proxy_str: str,
-        demo: bool,
-        name: str,
-        dir_log: Optional[Path],
-        dir_debug: Optional[Path],
+        time_out: int,
+        logger: Optional[Logger],
+        debugger: Optional[Debugger],
     ) -> None:
 
         self.user_agent = user_agent
         self.proxy_str = proxy_str
-        self.demo = demo
-        self.name = name
+        self.time_out = time_out
 
-        self.logger = Logger(path=dir_log, name="http.log", demo=self.demo)
+        self.logger = logger
+        self.debugger = debugger
 
-        self.timeout = 30
-
-        self.data = self.init_data()
-        self.debugger: Debugger = self.init_debugger(dir_debug=dir_debug)
-
-    @staticmethod
-    def init_data() -> dict:
-        """for debug output if derived object"""
-        return {"time_stamp": 0, "time_str": "", "req": {}, "res": {}}
-
-    def init_debugger(self, dir_debug: Path, length: int = 4) -> Debugger:
-        """Init debugger."""
-        name = self.name if self.name else self.__class__.__name__
-        return Debugger(path=dir_debug, name=name, length=length)
+        self.data: dict = {"time_stamp": 0, "time_str": "", "req": {}, "res": {}}
 
 
 class Http(BaseClient):
@@ -78,11 +64,16 @@ class Http(BaseClient):
         self,
         user_agent: str,
         proxy_str: str,
-        demo: bool = True,
-        name: str = "",
+        time_out: int,
+        logger: Optional[Logger],
+        debugger: Optional[Debugger],
     ) -> None:
         super().__init__(
-            user_agent=user_agent, proxy_str=proxy_str, demo=demo, name=name
+            user_agent=user_agent,
+            proxy_str=proxy_str,
+            time_out=time_out,
+            logger=logger,
+            debugger=debugger,
         )
 
         headers = {"User-Agent": user_agent}
@@ -171,7 +162,7 @@ class Http(BaseClient):
         self, method: str, url: str, debug: bool = False, **kwargs: Any
     ) -> None:
         """save request information into self.data"""
-        if debug is True:
+        if debug and self.debugger:
             _kwargs = {}
             for key, value in kwargs.items():
                 try:
@@ -194,14 +185,12 @@ class Http(BaseClient):
                 "headers": headers,
                 "cookies": cookies,
             }
-            if self.debugger is None:
-                self.debugger = self.init_debugger()
             self.debugger.sid = self.debugger.sid_new()
             self.debugger.save(self.data)
 
     def save_res(self, response: Response, debug: bool = False) -> None:
         """save http response into self.data"""
-        if debug is True:
+        if debug and self.debugger:
             cookies = dict(response.cookies.items())
             headers = dict(response.headers.items())
             try:
@@ -216,9 +205,8 @@ class Http(BaseClient):
                 "text": response.text,
                 "json": res_json,
             }
-            if self.debugger is not None:
-                # suppose debugger is already initialized.
-                self.debugger.save(self.data)
+            # suppose debugger is already initialized.
+            self.debugger.save(self.data)
 
     def req(
         self, method: str, url: str, debug: bool = False, **kwargs: Any
@@ -229,16 +217,18 @@ class Http(BaseClient):
             self.prepare_headers(**kwargs)
             self.save_req(method, url, debug, **kwargs)
             if not kwargs.get("timeout", None):
-                kwargs["timeout"] = self.timeout
+                kwargs["timeout"] = self.time_out
             with self.session.request(method, url, **kwargs) as response:
                 code = response.status_code
                 length = len(response.text)
                 message = f"[{code}]<{length}>{response.url}"
-                self.logger.info(message)
+                if self.logger:
+                    self.logger.info(message)
                 self.save_res(response, debug)
                 return response
         except requests.RequestException as err:
-            self.logger.error(err)
+            if self.logger:
+                self.logger.error(err)
         return response
 
     def get(self, url: str, debug: bool = False, **kwargs: Any) -> Optional[Response]:
@@ -287,9 +277,14 @@ class Chrome(BaseClient):
         self,
         user_agent: str,
         proxy_str: str,
-        demo: bool = True,
-        name: str = "",
+        time_out: int,
+        logger: Optional[Logger],
+        debugger: Optional[Debugger],
     ) -> None:
         super().__init__(
-            user_agent=user_agent, proxy_str=proxy_str, demo=demo, name=name
+            user_agent=user_agent,
+            proxy_str=proxy_str,
+            time_out=time_out,
+            logger=logger,
+            debugger=debugger,
         )

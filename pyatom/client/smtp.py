@@ -155,14 +155,14 @@ class MailSender:
                 "Not connected to any server. Try self.connect() first"
             )
 
-        print("Message: {}".format(self.msg.get_payload()))
+        #  print("Message: {}".format(self.msg.get_payload()))
 
         for recipient in recipients:
             self.msg.replace_header("To", recipient)
             print("Sending to {}".format(recipient))
             self.smtpserver.send_message(self.msg)
 
-        print("All messages sent")
+        #  print("All messages sent")
 
         self.disconnect()
-        print("Connection closed")
+        #  print("Connection closed")

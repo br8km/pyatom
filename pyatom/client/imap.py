@@ -17,8 +17,8 @@ import regex as re
 from regex import Pattern
 import socks
 
-from .debug import Debugger
-from .proxy import Proxy
+from pyatom.base.debug import Debugger
+from pyatom.base.proxy import Proxy
 
 
 __all__ = ("PostfixImap",)
