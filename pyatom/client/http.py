@@ -64,9 +64,9 @@ class Http(BaseClient):
         self,
         user_agent: str,
         proxy_str: str,
-        time_out: int,
-        logger: Optional[Logger],
-        debugger: Optional[Debugger],
+        time_out: int = 30,
+        logger: Optional[Logger] = None,
+        debugger: Optional[Debugger] = None,
     ) -> None:
         super().__init__(
             user_agent=user_agent,
