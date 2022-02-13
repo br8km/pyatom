@@ -115,6 +115,7 @@ class TestLogger:
     def test_logger(self, caplog: LogCaptureFixture) -> None:
         """Test logger method."""
         logger = init_logger(name=self.name)
+
         logger.info(self.flag)
         record = caplog.records[-1]
         assert self.flag == record.message
@@ -155,4 +156,5 @@ class TestLogger:
 
 
 if __name__ == "__main__":
+    # pytest log.py
     app = TestLogger()
