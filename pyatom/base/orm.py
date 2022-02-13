@@ -16,6 +16,7 @@ from sqlalchemy.engine import Engine
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import scoped_session, sessionmaker
+from sqlalchemy import Column, Integer, String, Boolean
 
 
 __all__ = ("ORM",)
@@ -288,8 +289,9 @@ class Sqlite(ORM):
     """Sqlite ORM."""
 
     def __init__(self, db_file: Path, echo: bool = False, future: bool = True) -> None:
-        url = f"sqlite:///{db_file.absolute()}"
-        engine = create_engine(url, echo=echo, future=future)
+        """Init Sqlite."""
+        file_str = str(db_file.absolute())
+        engine = create_engine(url=f"sqlite:///{file_str}", echo=echo, future=future)
 
         super().__init__(engine=engine, future=future)
         # self.create_tables()
@@ -308,6 +310,7 @@ class PostgreSQL(ORM):
         echo: bool = False,
         future: bool = True,
     ) -> None:
+        """Init PostgreSQL."""
         url = f"postgresql+{driver}://{db_user}:{db_pass}@{db_host}/{db_name}"
         engine = create_engine(url, echo=echo, future=future)
 
@@ -330,8 +333,60 @@ class MySQL(ORM):
         echo: bool = False,
         future: bool = True,
     ) -> None:
+        """Init MySQL."""
         url = f"mysql+{driver}://{db_user}:{db_pass}@{db_host}:{db_port}/{db_name}?charset=utf8mb4"
         engine = create_engine(url, encoding=encoding, echo=echo, future=future)
 
         super().__init__(engine=engine, future=future)
         # self.create_tables()
+
+
+class TableDomain(Base):
+    """Domain table"""
+
+    __tablename__ = "TableDomain"
+    __table_args__ = {"comment": "Table.Domain"}
+
+    id = Column(Integer, nullable=False, primary_key=True, autoincrement=True)
+    country = Column(String(2), nullable=False, index=True)
+    netloc = Column(String(63), nullable=False, index=True)
+    root = Column(Boolean, nullable=False, index=True)
+
+    def __repr__(self) -> str:
+        return f"<TableDomain(id={self.id}, country='{self.country}', netloc='{self.netloc}', root={self.root})>"
+
+
+class TestORM:
+    """Test ORM Operation."""
+
+    dir_root = Path(__file__).parent
+
+    def test_orm_sqlite(self) -> None:
+        """test orm for sqlite3 database."""
+        db_file = Path(self.dir_root, "db.sqlite")
+        db_file.unlink(missing_ok=True)
+
+        orm = Sqlite(db_file=db_file, echo=True)
+        orm.create_tables()
+
+        dict_domain = {"country": "US", "netloc": "www.google.com", "root": False}
+
+        table_id = orm.add(TableDomain, dict_domain)
+        assert isinstance(table_id, int)
+        assert orm.update(
+            TableDomain,
+            item_id=table_id,
+            dict_item={"netloc": "bing.com", "root": True},
+        )
+        assert orm.delete(TableDomain, item_id=table_id)
+        db_file.unlink(missing_ok=True)
+
+    def test_orm_mysql(self) -> None:
+        """test orm for mysql database."""
+
+    def test_orm_postgresql(self) -> None:
+        """test orm for postgresql database."""
+
+
+if __name__ == "__main__":
+    app = TestORM()
