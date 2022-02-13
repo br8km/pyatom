@@ -242,6 +242,12 @@ class TestIO:
         assert load_list(file) == content
         assert file_del(file)
 
+        content = []
+        save_list(file, content)
+        assert file.is_file()
+        assert load_list(file) == content
+        assert file_del(file)
+
     def test_save_load_dict(self) -> None:
         """test save_dict, load_dict"""
         file = Path(self.dir_root, "test.file")
@@ -252,11 +258,23 @@ class TestIO:
         assert load_dict(file) == content
         assert file_del(file)
 
+        content = {"dict": content}
+        save_dict(file, content)
+        assert file.is_file()
+        assert load_dict(file) == content
+        assert file_del(file)
+
     def test_save_load_list_list(self) -> None:
         """test save_list_list, load_list_list"""
         file = Path(self.dir_root, "test.file")
 
         content = [[random.randint(0, 999) for _ in range(100)] for _ in range(10)]
+        save_list_list(file, content)
+        assert file.is_file()
+        assert load_list_list(file) == content
+        assert file_del(file)
+
+        content = [[]]
         save_list_list(file, content)
         assert file.is_file()
         assert load_list_list(file) == content
