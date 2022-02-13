@@ -52,12 +52,15 @@ class TestChars:
         """Test string random generation."""
 
         number = 12
-        strs = str_rnd(number=number)
-        assert len(strs) == number
-        assert re.compile(r"[A-Z]").findall(strs) == []
 
-        strs = str_rnd(number=number, upper=True)
-        assert re.compile(r"[A-Z]").findall(strs)
+        assert all(
+            len(chars) == number and re.compile(r"[A-Z]").findall(chars) == []
+            for chars in (str_rnd(number=number) for _ in range(100))
+        )
+
+        assert any(
+            re.compile(r"[A-Z]").findall(str_rnd(upper=True)) != [] for _ in range(100)
+        )
 
         strong_chars = "@#$%"
         assert any(
