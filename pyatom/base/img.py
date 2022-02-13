@@ -159,11 +159,15 @@ class TestRehash:
         file_old = Path(Path(__file__).parent, "old.png")
         file_new = Path(Path(__file__).parent, "new.png")
 
+        file_old.unlink(missing_ok=True)
+        file_new.unlink(missing_ok=True)
+
         assert file_old.is_file() is False
         assert file_new.is_file() is False
 
         img = self.gen_image()
         img.save(fp=file_old, format="PNG")
+
         assert file_old.is_file()
         hash_old = self.rehasher.get_hash(file_old)
         assert hash_old
@@ -185,6 +189,9 @@ class TestRehash:
         """Test rehash jpg image."""
         file_old = Path(Path(__file__).parent, "old.jpg")
         file_new = Path(Path(__file__).parent, "new.jpg")
+
+        file_old.unlink(missing_ok=True)
+        file_new.unlink(missing_ok=True)
 
         assert file_old.is_file() is False
         assert file_new.is_file() is False
@@ -212,6 +219,9 @@ class TestRehash:
         """Test rehash gif image."""
         file_old = Path(Path(__file__).parent, "old.gif")
         file_new = Path(Path(__file__).parent, "new.gif")
+
+        file_old.unlink(missing_ok=True)
+        file_new.unlink(missing_ok=True)
 
         assert file_old.is_file() is False
         assert file_new.is_file() is False
