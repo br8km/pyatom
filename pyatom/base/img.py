@@ -13,7 +13,7 @@ import imageio
 import numpy as np
 
 
-__all__ = ("Rehasher",)
+__all__ = ("ReHasher",)
 
 
 class AbsImage(ABC):
@@ -50,7 +50,7 @@ class AbsImage(ABC):
         return file_type.lower().split("/")[1] if file_type else ""
 
 
-class Rehasher(AbsImage):
+class ReHasher(AbsImage):
     """Simple Example Code for Rehash Image by random pixels.
 
     To fight against new algorithm like this:
@@ -146,7 +146,7 @@ class TestRehash:
     height = 100
     frames = 10
 
-    rehasher = Rehasher()
+    rehasher = ReHasher()
 
     def gen_image(self) -> ImageObj:
         """Generate new image with random color."""
