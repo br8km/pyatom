@@ -109,36 +109,49 @@ def init_logger(
 class TestLogger:
     """Testcase for logger."""
 
+    name = "test"
     flag = "hello world"
-    logger = init_logger(name="test")
-    # logger.propagate = True
 
     def test_logger(self, caplog: LogCaptureFixture) -> None:
         """Test logger method."""
-        self.logger.info(self.flag)
+        logger = init_logger(name=self.name)
+        logger.info(self.flag)
         record = caplog.records[-1]
         assert self.flag == record.message
         assert record.levelno == INFO
 
-        self.logger.debug(self.flag)
+        logger.debug(self.flag)
         record = caplog.records[-1]
         assert self.flag == record.message
         assert record.levelno == DEBUG
 
-        self.logger.error(self.flag)
+        logger.error(self.flag)
         record = caplog.records[-1]
         assert self.flag == record.message
         assert record.levelno == ERROR
 
-        self.logger.warning(self.flag)
+        logger.warning(self.flag)
         record = caplog.records[-1]
         assert self.flag == record.message
         assert record.levelno == WARNING
 
-        self.logger.critical(self.flag)
+        logger.critical(self.flag)
         record = caplog.records[-1]
         assert self.flag == record.message
         assert record.levelno == CRITICAL
+
+    def test_logger_file(self, caplog: LogCaptureFixture) -> None:
+        """Test logger file."""
+        file_temp = Path(Path(__file__).parent, self.name + ".log")
+        logger = init_logger(name=self.name, file=file_temp)
+
+        logger.info(self.flag)
+        record = caplog.records[-1]
+        assert self.flag == record.message
+        assert record.levelno == INFO
+
+        logger.handlers = []
+        file_temp.unlink(missing_ok=True)
 
 
 if __name__ == "__main__":
