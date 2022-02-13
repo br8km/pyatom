@@ -18,7 +18,7 @@ from logging import (
 )
 
 from pathlib import Path
-from typing import Union
+from typing import Union, Optional
 
 
 __all__ = ("init_logger",)
@@ -73,27 +73,32 @@ class SmartFormatter(Formatter):
 
 
 def init_logger(
-    name: str, stream: bool, file: Union[str, Path, None], tz_offset: int = 8
+    name: str,
+    level: int = DEBUG,
+    file: Optional[Path] = None,
+    stream: bool = False,
+    tz_offset: int = 8,
 ) -> Logger:
     """Init Logger."""
 
-    if not stream and not file:
-        raise ValueError("Require at least one handler: stream|file")
-
     logger = getLogger(name)
-    logger.setLevel(DEBUG)
+    logger.setLevel(level)
 
     formatter = SmartFormatter(tz_offset=tz_offset)
 
-    if stream:
-        stream_handler = StreamHandler()
-        stream_handler.setFormatter(formatter)
-        logger.addHandler(stream_handler)
-
     if file:
-        file_name = str(file.absolute()) if isinstance(file, Path) else file
+        file_name = str(file.absolute())
         file_handler = FileHandler(filename=file_name, mode="a", encoding="utf-8")
         file_handler.setFormatter(formatter)
         logger.addHandler(file_handler)
+
+        if not stream:
+            # Only file handler
+            return logger
+
+    # With stream handler
+    stream_handler = StreamHandler()
+    stream_handler.setFormatter(formatter)
+    logger.addHandler(stream_handler)
 
     return logger

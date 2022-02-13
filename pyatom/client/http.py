@@ -76,11 +76,15 @@ class Http(BaseClient):
             debugger=debugger,
         )
 
-        headers = {"User-Agent": user_agent}
-        proxy_dict = {"http": f"http://{proxy_str}", "https": f"http://{proxy_str}"}
         self.session = requests.Session()
-        self.session.headers.update(headers)
-        self.session.proxies = proxy_dict
+
+        if user_agent:
+            headers = {"User-Agent": user_agent}
+            self.session.headers.update(headers)
+
+        if proxy_str:
+            proxy_dict = {"http": f"http://{proxy_str}", "https": f"http://{proxy_str}"}
+            self.session.proxies = proxy_dict
 
     def header_set(self, key: str, value: Optional[str] = None) -> None:
         """set header for session"""

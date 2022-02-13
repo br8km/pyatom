@@ -4,25 +4,57 @@
 
 import time
 import base64
+from abc import ABC, abstractmethod
 from urllib.parse import urlencode
 
 import requests
 
-from pyatom.base.log import Logger
+from pyatom.base.log import init_logger
 
 
 __all__ = ("TwoCaptcha",)
 
 
-class TwoCaptcha:
+class AbsCaptcha(ABC):
+    """Abstract cls for Captcha API Wrappers."""
+
+    def __init__(self, api_name: str, api_key: str) -> None:
+        """Init."""
+        self.name = api_name
+        self.key = api_key
+
+        self.logger = init_logger(name=self.name)
+
+    @abstractmethod
+    def balance(self) -> float:
+        """Get account balance."""
+        return 0.0
+
+    @abstractmethod
+    def recaptcha(self, site_key: str, page_url: str, retry: int = 3) -> str:
+        """Get Google ReCaptcha Response string."""
+        return ""
+
+    @abstractmethod
+    def captcha(self, raw_image: bytes, retry: int = 3) -> str:
+        """Get verification code string for raw image bytes."""
+        return ""
+
+
+class TwoCaptcha(AbsCaptcha):
     """2captcha.com API implemention"""
 
-    __slots__ = ("__dict__", "demo", "logger", "key", "base", "param")
+    __slots__ = (
+        "name",
+        "key",
+        "logger",
+        "base",
+    )
 
-    def __init__(self, api_key: str, logger: Logger) -> None:
+    def __init__(self, api_key: str, api_name: str = "2captcha") -> None:
         """Init 2captcha.com api wrapper."""
-        self.key = api_key
-        self.logger = logger
+        super().__init__(api_key=api_key, api_name=api_name)
+
         self.base = "http://2captcha.com/"
 
     def balance(self) -> float:
@@ -30,9 +62,10 @@ class TwoCaptcha:
         param = {"key": self.key, "action": "getbalance", "json": 1}
         url = f"{self.base}res.php?{urlencode(param)}"
         with requests.get(url, timeout=30) as response:
-            data = response.json()
-            if data.get("status") == 1:
-                return float(data.get("request"))
+            if response and response.status_code == 200:
+                data = response.json()
+                if data.get("status") == 1:
+                    return float(data.get("request", -1))
         return -1
 
     def recaptcha(self, site_key: str, page_url: str, retry: int = 3) -> str:
@@ -54,7 +87,7 @@ class TwoCaptcha:
                 param2 = {"key": self.key, "action": "get", "id": cid}
                 url2 = f"{self.base}res.php?{urlencode(param2)}"
                 answer = requests.get(url2).text
-                self.logger.debug("[{}]solving recaptcha...".format(i))
+                self.logger.info("[{%d}]solving recaptcha...", i)
 
                 j = 12
                 while j and answer:
@@ -62,30 +95,23 @@ class TwoCaptcha:
                         return answer.split("|")[1]
 
                     if "ERROR_CAPTCHA_UNSOLVABLE" in answer:
-                        self.logger.debug("ERROR_CAPTCHA_UNSOLVABLE")
+                        self.logger.error("ERROR_CAPTCHA_UNSOLVABLE")
                         return ""
 
                     if "CAPCHA_NOT_READY" in answer:
-                        self.logger.debug("[{}]{}".format(j, answer))
+                        self.logger.debug("[%d]%s", i, answer)
                         time.sleep(10)
                         answer = requests.get(url2).text
                     j = j - 1
-            except requests.exceptions.RequestException as err:
-                self.logger.error(err)
+            except requests.RequestException as err:
+                self.logger.exception(err)
         return ""
 
-    def normal(
-        self,
-        raw_image: bytes,
-        method: str = "base64",
-        retry: int = 3,
-    ) -> str:
-        """
-        Normal image captcha solver;
-        """
+    def normal(self, raw_image: bytes, retry: int = 3) -> str:
+        """Normal image captcha solver;"""
         payload = {
             "key": self.key,
-            "method": method,
+            "method": "base64",
             "body": base64.b64encode(raw_image),
         }
         url = f"{self.base}in.php"
@@ -93,18 +119,24 @@ class TwoCaptcha:
         for i in range(retry):
             try:
                 response = requests.post(url, data=payload)
-                self.logger.info(
-                    f"<{response.status_code}>[{len(response.text)}]- {response.url}"
+                self.logger.debug(
+                    "<%d>[%d]%s",
+                    response.status_code,
+                    len(response.text),
+                    response.url,
                 )
                 cid = response.text.split("|")[1]
                 param2 = {"key": self.key, "action": "get", "id": cid}
                 url2 = f"{self.base}res.php?{urlencode(param2)}"
                 response = requests.get(url2)
-                self.logger.info(
-                    f"<{response.status_code}>[{len(response.text)}]- {response.url}"
+                self.logger.debug(
+                    "<%d>[%d]%s",
+                    response.status_code,
+                    len(response.text),
+                    response.url,
                 )
                 answer = response.text
-                self.logger.debug("[{}]solving normal captcha...".format(i))
+                self.logger.info("[%d]solving normal captcha...", i)
 
                 j = 12
                 while j and answer:
@@ -112,14 +144,18 @@ class TwoCaptcha:
                         return answer.split("|")[1]
 
                     if "ERROR_CAPTCHA_UNSOLVABLE" in answer:
-                        self.logger.debug("ERROR_CAPTCHA_UNSOLVABLE")
+                        self.logger.error("ERROR_CAPTCHA_UNSOLVABLE")
                         return ""
 
                     if "CAPCHA_NOT_READY" in answer:
-                        self.logger.debug("[{}]{}".format(j, answer))
+                        self.logger.debug("[%d]%s", j, answer)
                         time.sleep(10)
                         answer = requests.get(url2).text
                     j = j - 1
-            except requests.exceptions.RequestException as err:
-                self.logger.error(err)
+            except requests.RequestException as err:
+                self.logger.exception(err)
         return ""
+
+
+class TestCaptcha:
+    """Test Captcha APIs."""
