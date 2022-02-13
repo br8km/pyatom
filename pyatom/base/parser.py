@@ -100,8 +100,8 @@ class BaseParser:
         return node, text
 
     @staticmethod
-    def regex_found(text: str, raw: str, flags: int = 0, index: int = 0) -> str:
-        """Regex found string by pattern and index."""
+    def regex_find(text: str, raw: str, flags: int = 0, index: int = 0) -> str:
+        """Find string by regex pattern raw string, pattern flags and index."""
         found = re.compile(raw, flags).findall(text)
         return str(found[index]) if len(found) > index else ""
 
@@ -195,11 +195,11 @@ class TestBaseParser:
         assert "div_two_text" in text
         assert "div_two_text" not in self.parser.as_str(node)
 
-    def test_regex_found(self) -> None:
-        """Test regex found."""
-        found_str = self.parser.regex_found(text=self.document, raw=r"hello")
+    def test_regex_find(self) -> None:
+        """Test regex find."""
+        found_str = self.parser.regex_find(text=self.document, raw=r"hello")
         assert found_str == "hello"
-        found_str = self.parser.regex_found(
+        found_str = self.parser.regex_find(
             text=self.document, raw=r"hello", flags=re.I, index=1
         )
         assert found_str == "Hello"
