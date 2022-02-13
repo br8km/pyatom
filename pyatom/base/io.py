@@ -2,17 +2,15 @@
     Input/Output Operation For File System
 """
 
-import os
-import shutil
+import random
 from pathlib import Path
 from typing import List, Union
 
 import orjson
 
-
 __all__ = (
-    "dir_clear",
     "dir_create",
+    "dir_del",
     "file_del",
     "load_str",
     "load_bytes",
@@ -31,35 +29,34 @@ __all__ = (
 )
 
 
-def dir_clear(dir_name: Union[str, Path], retain_dir: bool = True) -> bool:
-    """clear files with option to retain empty directory"""
-    if isinstance(dir_name, Path):
-        dir_name = str(dir_name.absolute())
-    if os.path.isdir(dir_name):
-        shutil.rmtree(dir_name)
-    if retain_dir is True:
-        os.makedirs(dir_name)
-    return retain_dir == os.path.isdir(dir_name)
-
-
 def dir_create(dir_name: Union[str, Path]) -> bool:
     """create directory"""
-    if isinstance(dir_name, Path):
-        dir_name = str(dir_name.absolute())
-    if not os.path.exists(dir_name):
-        os.makedirs(dir_name)
-    return os.path.isdir(dir_name)
+    path = Path(dir_name)
+    path.mkdir(parents=True, exist_ok=True)
+    return path.is_dir()
+
+
+def dir_del(dir_name: Union[str, Path], remain_root: bool = False) -> bool:
+    """Delete directory with option to remain root."""
+    path = Path(dir_name)
+    if not path.is_dir():
+        return True
+
+    for item in path.iterdir():
+        if item.is_dir():
+            dir_del(item)
+        else:
+            item.unlink(missing_ok=True)
+    if not remain_root:
+        path.rmdir()
+    return path.is_dir() == remain_root
 
 
 def file_del(file_name: Union[str, Path]) -> bool:
     """delete file if exsts"""
-    if Path(file_name).is_file():
-        try:
-            os.remove(file_name)
-            return True
-        except OSError:
-            pass
-    return Path(file_name).is_file() is False
+    path = Path(file_name)
+    path.unlink(missing_ok=True)
+    return path.is_file() is False
 
 
 def load_str(file_name: Union[str, Path], encoding: str = "utf8") -> str:
@@ -185,3 +182,96 @@ def save_line(
     """save lines of string into file"""
     with open(file_name, "w", encoding=encoding) as file:
         file.write("\n".join(file_content))
+
+
+class TestIO:
+    """Test IO Operation."""
+
+    dir_root = Path(__file__).parent
+
+    def test_dirs(self) -> None:
+        """Test directory operation."""
+        dir_test = Path(self.dir_root, "test", "child")
+        dir_test_str = str(dir_test.absolute())
+
+        assert dir_create(dir_name=dir_test)
+        assert dir_del(dir_name=dir_test, remain_root=True)
+        assert dir_del(dir_name=dir_test)
+
+        assert dir_create(dir_name=dir_test_str)
+        assert dir_del(dir_name=dir_test_str, remain_root=True)
+        assert dir_del(dir_name=dir_test_str)
+
+    def test_save_load_str(self) -> None:
+        """test save_str, load_str"""
+        file = Path(self.dir_root, "test.file")
+
+        content = "content"
+        save_str(file, content)
+        assert file.is_file()
+        assert load_str(file) == content
+        assert file_del(file)
+
+    def test_save_load_bytes(self) -> None:
+        """test save_bytes, load_bytes"""
+        file = Path(self.dir_root, "test.file")
+
+        content = b"content"
+        save_bytes(file, content)
+        assert file.is_file()
+        assert load_bytes(file) == content
+        assert file_del(file)
+
+    def test_save_load_line(self) -> None:
+        """test save_line, load_line"""
+        file = Path(self.dir_root, "test.file")
+
+        content = ["content"]
+        save_line(file, content)
+        assert file.is_file()
+        assert load_line(file) == content
+        assert file_del(file)
+
+    def test_save_load_list(self) -> None:
+        """test save_list, load_list"""
+        file = Path(self.dir_root, "test.file")
+
+        content = [random.randint(0, 999) for _ in range(100)]
+        save_list(file, content)
+        assert file.is_file()
+        assert load_list(file) == content
+        assert file_del(file)
+
+    def test_save_load_dict(self) -> None:
+        """test save_dict, load_dict"""
+        file = Path(self.dir_root, "test.file")
+
+        content = {"name": "Ben", "age": 24, "float": 123.456}
+        save_dict(file, content)
+        assert file.is_file()
+        assert load_dict(file) == content
+        assert file_del(file)
+
+    def test_save_load_list_list(self) -> None:
+        """test save_list_list, load_list_list"""
+        file = Path(self.dir_root, "test.file")
+
+        content = [[random.randint(0, 999) for _ in range(100)] for _ in range(10)]
+        save_list_list(file, content)
+        assert file.is_file()
+        assert load_list_list(file) == content
+        assert file_del(file)
+
+    def test_save_load_list_dict(self) -> None:
+        """test save_list_dict, load_list_dict"""
+        file = Path(self.dir_root, "test.file")
+
+        content = [{"name": "Ben", "age": 24, "float": 123.456} for _ in range(10)]
+        save_list_dict(file, content)
+        assert file.is_file()
+        assert load_list_dict(file) == content
+        assert file_del(file)
+
+
+if __name__ == "__main__":
+    app = TestIO()
