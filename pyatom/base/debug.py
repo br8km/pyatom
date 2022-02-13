@@ -67,10 +67,10 @@ class Debugger:
         """save data to file inside debug directory"""
         file_name = self.to_file()
         with open(file_name, "w", encoding=encoding) as file:
-            try:
+            if isinstance(data, (list, dict)):
                 file.write(json.dumps(data, indent=2))
-            except TypeError:
-                file.write(str(data))
+            else:
+                file.write(data)
         result = file_name.is_file()
         self.log(f"[{result}]save debug: {file_name}")
         return result
