@@ -78,3 +78,35 @@ class Socks5Proxy(Proxy):
 
     def __init__(self, proxy_str: str, proxy_type: int = 2) -> None:
         super().__init__(proxy_str=proxy_str, proxy_type=proxy_type)
+
+
+class TestProxy:
+    """TestCase for Proxy."""
+
+    @staticmethod
+    def test_proxy() -> None:
+        """Test general proxy string."""
+        proxy_str = "hello_:World8@127.0.0.1:5000"
+        proxy_type = 1
+        proxy = Proxy(proxy_str=proxy_str, proxy_type=proxy_type)
+        assert proxy.usr == "hello_"
+        assert proxy.pwd == "World8"
+        assert proxy.port == 5000
+
+    @staticmethod
+    def test_http_proxy() -> None:
+        """Test http proxy string."""
+        proxy_str = "hello_:World8@127.0.0.1:5000"
+        proxy = HttpProxy(proxy_str=proxy_str)
+        assert proxy.port == 5000
+
+    @staticmethod
+    def test_socks5_proxy() -> None:
+        """Test socks5 proxy string."""
+        proxy_str = "hello_:World8@127.0.0.1:5000"
+        proxy = Socks5Proxy(proxy_str=proxy_str)
+        assert proxy.port == 5000
+
+
+if __name__ == "__main__":
+    app = TestProxy()
