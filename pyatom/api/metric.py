@@ -7,7 +7,7 @@
 import requests
 
 from pyatom.base.utils import print2
-from pyatom.base.log import Logger
+from pyatom.base.log import init_logger
 
 
 __all__ = ("DomDetailer",)
@@ -19,11 +19,11 @@ class DomDetailer:
     Alternative: https://seo-rank.my-addr.com/
     """
 
-    def __init__(self, app: str, key: str, logger: Logger):
+    def __init__(self, app: str, key: str):
         """Init DomDetailer."""
         self.app = app
         self.key = key
-        self.logger = logger
+        self.logger = init_logger(name=app)
 
         self.params = {"apikey": self.key, "app": self.app}
 
@@ -32,15 +32,15 @@ class DomDetailer:
         self.min_da = 10
         self.min_pa = 10
 
-    def balance(self) -> int:
+    def balance(self) -> float:
         """Get Account Balance"""
         url = "http://domdetailer.com/api/checkBalance.php"
         with requests.post(url, data=self.params) as response:
             if response is not None and "UnitsLeft" in response.text:
                 data = response.json()
                 if isinstance(data, list):
-                    return int(data[1])
-        return 0
+                    return float(data[1])
+        return 0.0
 
     def check(
         self, domain: str, majestic_choice: str = "root", debug: bool = False
@@ -72,14 +72,32 @@ class DomDetailer:
         params["domain"] = domain
         params["majesticChoice"] = majestic_choice
         url = f"http://domdetailer.com/api/checkDomain.php?{params}"
-        response = requests.post(url, data=params)
-        self.logger.info(
-            f"<{response.status_code}>[{len(response.text)}] - {response.url}"
-        )
-        if response is not None and response.status_code == 200:
-            data = response.json()
+        resp = requests.post(url, data=params)
+        self.logger.info("<%d>[%d] - %s", resp.status_code, len(resp.text), resp.url)
+        if resp and resp.status_code == 200:
+            data = resp.json()
             if isinstance(data, dict):
                 if debug:
                     print2(data)
                 return data
         return {}
+
+
+class TestMetric:
+    """TestCase for Metric api wrappers."""
+
+    key_domdetailer = ""
+
+    def test_domdetailer(self) -> None:
+        """Test DomDetailer."""
+        app = DomDetailer(app="app", key=self.key_domdetailer)
+        balance = app.balance()
+        print(f"domdetailer.balance = {balance}")
+        assert balance > 0
+
+        data = app.check(domain="bing.com", debug=True)
+        assert data != {}
+
+
+if __name__ == "__main__":
+    TestMetric()
