@@ -2,11 +2,32 @@
     Proxy cls for http/socks proxy
 """
 
+from base64 import encodebytes
+from urllib.parse import unquote_to_bytes
 
 import regex as re
 
 
-__all__ = ("Proxy", "HttpProxy", "Socks5Proxy")
+__all__ = (
+    "Proxy",
+    "HttpProxy",
+    "Socks5Proxy",
+    "to_auth_header",
+)
+
+
+def to_auth_header(usr: str, pwd: str) -> tuple[str, str]:
+    """Generate proxy headers."""
+    if not usr and not pwd:
+        return "", ""
+    if usr and pwd:
+        auth_str = f"{usr}:{pwd}"
+        auth_bytes = unquote_to_bytes(auth_str)
+        auth_str = encodebytes(auth_bytes).decode("utf-8")
+        auth_str = "".join(auth_str.split())  # get rid of whitespace
+        return "Proxy-Authorization", "Basic " + auth_str
+
+    raise ValueError(f"proxy auth error: `{usr}`:`{pwd}`")
 
 
 class Proxy:
@@ -82,6 +103,14 @@ class Socks5Proxy(Proxy):
 
 class TestProxy:
     """TestCase for Proxy."""
+
+    @staticmethod
+    def test_auth_headers() -> None:
+        """Test proxy usr:pwd to auth headers."""
+        usr, pwd = "hello", "world"
+        key, value = to_auth_header(usr=usr, pwd=pwd)
+        assert key and key.startswith("Proxy")
+        assert value and value.startswith("Basic")
 
     @staticmethod
     def test_proxy() -> None:
