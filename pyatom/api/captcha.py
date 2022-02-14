@@ -107,7 +107,7 @@ class TwoCaptcha(AbsCaptcha):
                 self.logger.exception(err)
         return ""
 
-    def normal(self, raw_image: bytes, retry: int = 3) -> str:
+    def captcha(self, raw_image: bytes, retry: int = 3) -> str:
         """Normal image captcha solver;"""
         payload = {
             "key": self.key,
@@ -159,3 +159,43 @@ class TwoCaptcha(AbsCaptcha):
 
 class TestCaptcha:
     """Test Captcha APIs."""
+
+    # Set key before run test cases.
+    key_2captcha = ""
+
+    @staticmethod
+    def _recaptcha(app: AbsCaptcha, number: int = 10) -> bool:
+        """test twocaptcha google recaptcha solving"""
+        page_url = "https://www.google.com/recaptcha/api2/demo"
+        site_key = "6Le-wvkSAAAAAPBMRTvw0Q4Muexq9bi0DJwx_mJ-"
+        return any(
+            app.recaptcha(site_key=site_key, page_url=page_url) != ""
+            for _ in range(number)
+        )
+
+    @staticmethod
+    def _captcha(app: AbsCaptcha, number: int = 10) -> bool:
+        """test twocaptcha mormal image captcha solving"""
+        page_url = "https://www.phpcaptcha.org/securimage/securimage_show.php?namespace=captcha_one"
+        for _ in range(number):
+            with requests.get(page_url, stream=True, timeout=30) as response:
+                if response and response.status_code == 200:
+                    if app.captcha(raw_image=response.content) != "":
+                        return True
+        return False
+
+    def test_twocaptcha(self) -> None:
+        """Test 2captcha.com api wrapper."""
+        app = TwoCaptcha(api_key=self.key_2captcha)
+        assert app.balance() > 0
+
+        assert self._recaptcha(app=app)
+        assert self._captcha(app=app)
+
+    def test_other(self) -> None:
+        """Test other capter solver."""
+        assert self is not None
+
+
+if __name__ == "__main__":
+    TestCaptcha()
