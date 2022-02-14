@@ -5,6 +5,8 @@
 from dataclasses import dataclass
 from enum import IntEnum, unique
 
+from datetime import datetime
+
 
 __all__ = (
     "Name",
@@ -36,12 +38,21 @@ class Birth:
     month: int
     day: int
 
+    @property
+    def valid(self) -> bool:
+        """Validate birth attributes."""
+        try:
+            datetime(year=self.year, month=self.month, day=self.day)
+            return True
+        except ValueError:
+            return False
+
 
 @dataclass
 class Phone:
     """Phone number for profile"""
 
-    code: int
+    code: str
     number: str
     mobile: bool
 
@@ -107,7 +118,7 @@ class Account:
 
     @property
     def okay(self) -> bool:
-        """Check if okay to posting"""
+        """Check if account okay to posting"""
         return bool(self.status == Status.LOGIN and not self.error)
 
 
@@ -123,7 +134,6 @@ class Post:
     timestamp: int
 
     url: str
-    code: str
     error: str
 
     @property
@@ -137,3 +147,63 @@ class FingerPrint:
     """Finger Print for Browser."""
 
     user_agent: str
+
+
+class TestStructure:
+    """TestCase for Structures."""
+
+    @staticmethod
+    def test_birth() -> None:
+        """Test birth cls."""
+        birth = Birth(year=-1, month=12, day=12)
+        assert birth.valid is False
+        birth = Birth(year=1900, month=24, day=12)
+        assert birth.valid is False
+        birth = Birth(year=2000, month=10, day=55)
+        assert birth.valid is False
+        birth = Birth(year=2020, month=6, day=25)
+        assert birth.valid is True
+
+    @staticmethod
+    def test_account() -> None:
+        """Test account cls."""
+        account = Account(
+            aid="aid",
+            user_agent="user_agent",
+            proxy_str="proxy_str",
+            email_user="email_user",
+            email_pass="email_pass",
+            username="username",
+            password="password",
+            cookies={},
+            status=0,
+            error="error",
+        )
+        assert account.okay is False
+        account.status = Status.LOGIN
+        assert account.okay is False
+        account.error = ""
+        assert account.okay is True
+
+    @staticmethod
+    def test_post() -> None:
+        """Test post cls."""
+        post = Post(
+            pid="pid",
+            title="title",
+            content=["content"],
+            hashtag=["hashtag"],
+            attachment=["attachment"],
+            timestamp=0,
+            url="",
+            error="error",
+        )
+        assert post.success is False
+        post.url = "url"
+        assert post.success is False
+        post.error = ""
+        assert post.success is True
+
+
+if __name__ == "__main__":
+    app = TestStructure()
