@@ -10,13 +10,10 @@ from dataclasses import dataclass
 import requests
 
 from pyatom.base.chars import hash2s
-from pyatom.base.io import dir_create, load_dict, save_dict
+from pyatom.base.io import dir_create, dir_del, load_dict, save_dict
 
 
-__all__ = (
-    "Pixabay",
-    "Pexels",
-)
+__all__ = ("Pixabay",)
 
 
 @dataclass
@@ -75,6 +72,7 @@ class BaseStock(ABC):
 
         self.sep = "__"  # file name seperator
         self.dir_cache = dir_cache
+
         dir_create(self.dir_cache)
 
         self.payload: dict[str, str] = {}
@@ -102,6 +100,10 @@ class BaseStock(ABC):
                 file.unlink()
         return True
 
+    def cache_del(self) -> bool:
+        """Delete cache diretory."""
+        return dir_del(self.dir_cache)
+
     def to_cache_file(self, request_url: str) -> Path:
         """Generate random filename corresponding to cache_id and timestamp."""
         cache_id = hash2s(request_url)
@@ -109,8 +111,8 @@ class BaseStock(ABC):
         file_name = self.sep.join([self.name, now_str, cache_id])
         return Path(self.dir_cache, f"{file_name}.json")
 
-    @abstractmethod
     @staticmethod
+    @abstractmethod
     def param_valid(key: str) -> list[str]:
         """Get valid param value string list."""
         assert key
@@ -642,3 +644,49 @@ class WikiMediaCommons(BaseStock):
         super().__init__(
             name="WikiMedia.Commons", cache_second=86400, dir_cache=dir_cache
         )
+
+
+class TestStock:
+    """TestCase for Stock api wrappers."""
+
+    dir_app = Path(__file__).parent
+    dir_cache = Path(dir_app, "cache")
+
+    key_pixabay = ""
+
+    def test_base_cache(self) -> None:
+        """Test BaseStock from Pixabay."""
+        app = Pixabay(api_key=self.key_pixabay, dir_cache=self.dir_cache)
+
+        request_url = "http://bing.com"
+        response_data = {"url": request_url}
+        assert app.cache_save(request_url=request_url, response_data=response_data)
+        assert app.cache_get(request_url=request_url) == response_data
+        assert app.cache_clear() is True
+        assert app.cache_del() is True
+
+    def test_pixabay(self) -> None:
+        """Test Pixabay."""
+        app = Pixabay(api_key=self.key_pixabay, dir_cache=self.dir_cache)
+
+        keyword = "yellow flower"
+
+        data_image = app.search_image(q=keyword)
+        assert data_image != {}
+        total, total_hits = app.parse_totals(response_data=data_image)
+        assert total > 0 and total_hits > 0
+        list_photo = list(app.parse_images(response_data=data_image))
+        assert len(list_photo) > 0
+
+        data_video = app.search_video(q=keyword)
+        assert data_video != {}
+        total, total_hits = app.parse_totals(response_data=data_video)
+        assert total > 0 and total_hits > 0
+        list_video = list(app.parse_videos(response_data=data_video))
+        assert len(list_video) > 0
+
+        assert app.cache_del() is True
+
+
+if __name__ == "__main__":
+    TestStock()
