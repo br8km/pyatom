@@ -9,7 +9,7 @@ from urllib.parse import urlencode
 
 import requests
 
-from pyatom.base.log import init_logger
+from pyatom.base.log import Logger, init_logger
 
 
 __all__ = ("TwoCaptcha",)
@@ -18,12 +18,11 @@ __all__ = ("TwoCaptcha",)
 class AbsCaptcha(ABC):
     """Abstract cls for Captcha API Wrappers."""
 
-    def __init__(self, api_name: str, api_key: str) -> None:
+    def __init__(self, api_name: str, api_key: str, logger: Logger) -> None:
         """Init."""
         self.name = api_name
         self.key = api_key
-
-        self.logger = init_logger(name=self.name)
+        self.logger = logger
 
     @abstractmethod
     def balance(self) -> float:
@@ -51,9 +50,11 @@ class TwoCaptcha(AbsCaptcha):
         "base",
     )
 
-    def __init__(self, api_key: str, api_name: str = "2captcha") -> None:
+    def __init__(
+        self, api_key: str, logger: Logger, api_name: str = "2captcha"
+    ) -> None:
         """Init 2captcha.com api wrapper."""
-        super().__init__(api_key=api_key, api_name=api_name)
+        super().__init__(api_key=api_key, api_name=api_name, logger=logger)
 
         self.base = "http://2captcha.com/"
 
@@ -163,6 +164,8 @@ class TestCaptcha:
     # Set key before run test cases.
     key_2captcha = ""
 
+    logger = init_logger(name="test")
+
     @staticmethod
     def _recaptcha(app: AbsCaptcha, number: int = 10) -> bool:
         """test twocaptcha google recaptcha solving"""
@@ -186,7 +189,7 @@ class TestCaptcha:
 
     def test_twocaptcha(self) -> None:
         """Test 2captcha.com api wrapper."""
-        app = TwoCaptcha(api_key=self.key_2captcha)
+        app = TwoCaptcha(api_key=self.key_2captcha, logger=self.logger)
         assert app.balance() > 0
 
         assert self._recaptcha(app=app)
