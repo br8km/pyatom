@@ -7,7 +7,7 @@
 import requests
 
 from pyatom.base.utils import print2
-from pyatom.base.log import init_logger
+from pyatom.base.log import Logger, init_logger
 
 
 __all__ = ("DomDetailer",)
@@ -19,11 +19,11 @@ class DomDetailer:
     Alternative: https://seo-rank.my-addr.com/
     """
 
-    def __init__(self, app: str, key: str):
+    def __init__(self, app: str, key: str, logger: Logger):
         """Init DomDetailer."""
         self.app = app
         self.key = key
-        self.logger = init_logger(name=app)
+        self.logger = logger
 
         self.params = {"apikey": self.key, "app": self.app}
 
@@ -88,9 +88,11 @@ class TestMetric:
 
     key_domdetailer = ""
 
+    logger = init_logger(name="test")
+
     def test_domdetailer(self) -> None:
         """Test DomDetailer."""
-        app = DomDetailer(app="app", key=self.key_domdetailer)
+        app = DomDetailer(app="app", key=self.key_domdetailer, logger=self.logger)
         balance = app.balance()
         print(f"domdetailer.balance = {balance}")
         assert balance > 0
