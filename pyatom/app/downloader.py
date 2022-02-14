@@ -13,7 +13,7 @@ from requests import Response
 from tqdm import tqdm
 
 from pyatom.base.io import dir_create, file_del
-from pyatom.base.log import Logger
+from pyatom.base.log import Logger, init_logger
 
 
 __all__ = ("DownLoader",)
@@ -32,10 +32,11 @@ class DownLoader:
 
         self.session = requests.Session()
         self.session.headers.update({"User-Agent": user_agent})
-        self.session.proxies = {
-            "http": f"http://{proxy_str}",
-            "https": f"http://{proxy_str}",
-        }
+        if proxy_str:
+            self.session.proxies = {
+                "http": f"http://{proxy_str}",
+                "https": f"http://{proxy_str}",
+            }
 
     def _head(self, file_url: str) -> Optional[Response]:
         """Head Request"""
@@ -104,9 +105,12 @@ class DownLoader:
         file_del(file_out)
 
         if not total_size:
+            # http head method to get response headers
             response = self._head(file_url)
             if response is None:
+                self.logger.error("file size error!")
                 return False
+
             total_size = self._file_size(response)
             if not total_size:
                 self.logger.error("file size error!")
@@ -155,3 +159,40 @@ class DownLoader:
                 file_url=file_url, file_out=file_out, total_size=total_size
             )
         return self.download_direct(file_url=file_url, file_out=file_out)
+
+
+class TestDownloader:
+    """Test Downloader."""
+
+    user_agent = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/78.0.3904.97 Safari/537.36"
+
+    dir_root = Path(__file__).parent
+    proxy_str = ""
+
+    def test_downloader(self) -> None:
+        """test downloader by direct or ranges downloading"""
+        app = DownLoader(
+            user_agent=self.user_agent,
+            proxy_str=self.proxy_str,
+            logger=init_logger(name="test"),
+        )
+
+        # url accept ranges
+        file_url_ranges = "http://ipv4.download.thinkbroadband.com/10MB.zip"
+        file_url_ranges = "http://s3.amazonaws.com/alexa-static/top-1m.csv.zip"
+
+        file_tmp = Path(self.dir_root, "ranges.tmp")
+        assert app.download_ranges(file_url=file_url_ranges, file_out=file_tmp)
+        file_del(file_tmp)
+        assert file_tmp.is_file() is False
+
+        file_url_direct = "https://www.google.com/images/branding/googlelogo/2x/googlelogo_color_92x30dp.png"
+        file_url_direct = "https://raw.githubusercontent.com/ableco/test-files/master/images/test-image-png_4032x3024.png"
+        file_tmp = Path(self.dir_root, "direct.tmp")
+        assert app.download_direct(file_url=file_url_direct, file_out=file_tmp)
+        file_del(file_tmp)
+        assert file_tmp.is_file() is False
+
+
+if __name__ == "__main__":
+    TestDownloader()
