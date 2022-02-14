@@ -4,7 +4,9 @@
 
 import random
 import time
+from datetime import datetime
 from typing import Optional
+import pytz
 
 import arrow
 from arrow import Arrow
@@ -23,6 +25,15 @@ def smart_delay(seconds: float, demo: bool = False) -> float:
     if not demo:
         time.sleep(pause)
     return pause
+
+
+def utc_offset(time_zone: str) -> int:
+    """Convert time zone string to utc offset integer for hour diff."""
+    now = datetime.now(pytz.timezone(time_zone))
+    offset = now.utcoffset()
+    if offset:
+        return int(offset.total_seconds() / 3600)
+    return 0
 
 
 class Timer:
