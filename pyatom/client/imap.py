@@ -2,10 +2,10 @@
     Imap Client
 """
 
-import imaplib
+import time
 import random
 import ssl
-import time
+import imaplib
 from email import message_from_bytes, message_from_string
 from email.header import decode_header
 from email.message import Message
@@ -336,8 +336,8 @@ class ImapClient:
                 if debug:
                     print(f"index={index} - uid={uid}")
                     print(msg_data)
-                    if self.debugger is not None:
-                        self.debugger.sid_new()
+                    if self.debugger:
+                        self.debugger.id_add()
                         self.debugger.save(msg_data)
                 if not pattern:
                     continue
@@ -394,7 +394,6 @@ class PostfixImap(ImapClient):
         date_str = self._date_str(time_stamp=time_stamp)
         query = f'(SINCE {date_str} FROM "{from_email}" TO "{to_email}" SUBJECT "{subject}")'
         query = f'SUBJECT "{subject}"'
-        print(query)
         for _ in range(retry):
             if self.login():
                 results = self.lookup(query, pattern, time_stamp, debug)
@@ -405,7 +404,7 @@ class PostfixImap(ImapClient):
             time.sleep(60)
         return []
 
-    def showcase(self) -> List[str]:
+    def example(self) -> List[str]:
         """
         show case for search substack password reset url
         Note: ts <= 365 days
@@ -430,3 +429,35 @@ class PostfixImap(ImapClient):
             retry=6,
             debug=True,
         )
+
+
+class TestImap:
+    """TestCase for Imap Client."""
+
+    postfix_domain = ""
+    postfix_port = 0
+    postfix_usr = ""
+    postfix_pwd = ""
+
+    proxy_str = ""
+
+    def to_client(self) -> PostfixImap:
+        """Get PostfixImap Client."""
+        return PostfixImap(
+            host=self.postfix_domain,
+            port=self.postfix_port,
+            usr=self.postfix_usr,
+            pwd=self.postfix_pwd,
+            proxy=Proxy(proxy_str=self.proxy_str),
+        )
+
+    def test_postfiximap(self) -> None:
+        """test PostfixImap"""
+        client = self.to_client()
+        result = client.example()
+        print(result)
+        assert result
+
+
+if __name__ == "__main__":
+    TestImap()
