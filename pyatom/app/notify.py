@@ -90,10 +90,16 @@ class BaseSender:
     def save_notice(self, notice: Notice) -> bool:
         """Save notice object into local file."""
         line_break = "\n" + "-" * 30 + "\n"
-        file_path = Path(self.dir_bak, f"{self.sender}.json.txt")
-        with open(file_path, "a") as file:
+        file_notice = Path(self.dir_bak, f"{self.sender}.json.txt")
+        with open(file_notice, "a") as file:
             file.write(json.dumps(asdict(notice), indent=2) + line_break)
-        return file_path.is_file()
+        return file_notice.is_file()
+
+    def clean_notice(self) -> bool:
+        """Clear all notice from local file storage."""
+        file_notice = Path(self.dir_bak, f"{self.sender}.json.txt")
+        file_notice.unlink(missing_ok=True)
+        return file_notice.is_file() is False
 
 
 class PostfixSender(BaseSender):
@@ -265,6 +271,8 @@ class TestNotify:
         file_del(self.file_temp)
         assert self.file_temp.is_file() is False
 
+        assert postfix.clean_notice() is True
+
     @pytest.mark.skip(reason="currently sms number not available.")
     def test_twilio_sender(self) -> None:
         """Test Twilio sender."""
@@ -283,6 +291,8 @@ class TestNotify:
         assert twilio.send(notice, number_to="", save=True)
         file_del(self.file_temp)
         assert self.file_temp.is_file() is False
+
+        assert twilio.clean_notice() is True
 
 
 if __name__ == "__main__":
