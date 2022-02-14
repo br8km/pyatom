@@ -63,6 +63,12 @@ class Debugger:
         """Generate file path from self.id_str."""
         return Path(self.path, self.id_str + ".debug")
 
+    def del_files(self) -> bool:
+        """Delete all debug files."""
+        for file in self.path.glob("*.debug"):
+            file.unlink(missing_ok=True)
+        return True
+
     def save(self, data: Union[str, list, dict], encoding: str = "utf8") -> bool:
         """save data to file inside debug directory"""
         file_name = self.to_file()
@@ -105,6 +111,8 @@ class TestDebugger:
 
         file_debug.unlink(missing_ok=True)
         assert file_debug.is_file() is False
+
+        assert self.debugger.del_files()
 
 
 if __name__ == "__main__":
