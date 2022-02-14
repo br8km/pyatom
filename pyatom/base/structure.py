@@ -78,13 +78,14 @@ class Address:
     """Address for profile"""
 
     ipaddr: str
-    tz_offset: int
     country: str
     state: str
     city: str
     street: str
-    zip: str
-    coordinate: tuple[int, int]
+    postal: str
+    coordinate: tuple[float, float]
+    time_zone: str
+    utc_offset: int
 
 
 @unique
