@@ -7,12 +7,13 @@ import time
 from dataclasses import dataclass, asdict
 from pathlib import Path
 
+import pytest
 from twilio.rest import Client
 from twilio.base.exceptions import TwilioRestException
 
 from pyatom.base.chars import str_rnd
-from pyatom.base.io import dir_create
-from pyatom.base.log import Logger
+from pyatom.base.io import dir_create, file_del, save_str
+from pyatom.base.log import Logger, init_logger
 from pyatom.client.smtp import MailSender
 
 
@@ -121,7 +122,7 @@ class PostfixSender(BaseSender):
         )
 
         self.client = MailSender(
-            host=self.host, port=self.port, usr=self.usr, pwd=self.pwd, use_ssl=False
+            host=self.host, port=self.port, usr=self.usr, pwd=self.pwd, use_ssl=ssl
         )
 
     def create_notice(
@@ -227,3 +228,62 @@ class TwilioSender(BaseSender):
             self.save_notice(notice=notice)
 
         return notice.success
+
+
+class TestNotify:
+    """TestCase for Notify."""
+
+    logger = init_logger(name="test")
+    dir_bak = Path(__file__).parent
+    file_temp = Path(dir_bak, "temp.file")
+
+    def create_temp_file(self) -> bool:
+        """Create temp file as attachment."""
+        number = 100
+        text = " ".join(str_rnd() for _ in range(number))
+        save_str(file_name=self.file_temp, file_content=text)
+        return self.file_temp.is_file()
+
+    @pytest.mark.skip(reason="tested okay.")
+    def test_postfix_sender(self) -> None:
+        """Test postfix sender."""
+        assert self.create_temp_file()
+        postfix = PostfixSender(
+            host="domain.com",
+            port=25,
+            usr="",
+            pwd="",
+            ssl=False,
+            logger=self.logger,
+            dir_bak=self.dir_bak,
+        )
+        files = [postfix.file_str(self.file_temp)]
+        notice = postfix.create_notice(
+            title="", content="content", files=files, urgency=0
+        )
+        assert postfix.send(notice, email_to="user@domain.com", save=True)
+        file_del(self.file_temp)
+        assert self.file_temp.is_file() is False
+
+    @pytest.mark.skip(reason="currently sms number not available.")
+    def test_twilio_sender(self) -> None:
+        """Test Twilio sender."""
+        assert self.create_temp_file()
+        twilio = TwilioSender(
+            sid="",
+            token="",
+            number="",
+            logger=self.logger,
+            dir_bak=self.dir_bak,
+        )
+        files = [twilio.file_str(self.file_temp)]
+        notice = twilio.create_notice(
+            title="", content="content", files=files, urgency=0
+        )
+        assert twilio.send(notice, number_to="", save=True)
+        file_del(self.file_temp)
+        assert self.file_temp.is_file() is False
+
+
+if __name__ == "__main__":
+    TestNotify()
