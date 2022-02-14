@@ -5,7 +5,6 @@
 import torch
 from transformers import PegasusForConditionalGeneration, PegasusTokenizer
 
-
 __all__ = ("Spinner",)
 
 
@@ -53,7 +52,7 @@ class Spinner:
         tgt_text = self.tokenizer.batch_decode(translated, skip_special_tokens=True)
         return [str(x) for x in tgt_text]
 
-    def _spin_demo(
+    def example(
         self, num_returns: int = 10, num_beams: int = 10, index: int = 0
     ) -> None:
         """Spin text demo."""
@@ -64,3 +63,27 @@ class Spinner:
         print(f"\n[{index}] - <{len(result)}>list of result:")
         for res in result:
             print(res)
+
+
+class TestSpinner:
+    """TestCase for Spinner."""
+
+    @staticmethod
+    def test_spinner() -> None:
+        """Test Spinner."""
+        app = Spinner()
+        num_returns = 10
+        num_beams = 10
+
+        context = "The ultimate test of your knowledge is your capacity to convey it to another."
+        result = app.get_response(
+            input_text=context, num_returns=num_returns, num_beams=num_beams
+        )
+        print(f"<{len(result)}>list of result:")
+        for res in result:
+            print(res)
+            assert res
+
+
+if __name__ == "__main__":
+    TestSpinner()
