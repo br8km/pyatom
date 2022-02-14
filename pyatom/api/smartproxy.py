@@ -12,7 +12,7 @@ import regex as re
 from requests import Response, Session, RequestException
 
 from pyatom.base.chars import str_rnd
-from pyatom.base.log import Logger
+from pyatom.base.log import Logger, init_logger
 
 
 __all__ = ("SmartProxy",)
@@ -22,7 +22,6 @@ class SmartProxy:
     """smartproxy.com API implemention"""
 
     __slots__ = (
-        "__dict__",
         "usr",
         "pwd",
         "logger",
@@ -221,3 +220,100 @@ class SmartProxy:
 
             self.logger.info(f"<BAD>[block={block}]{self.addr}")
         return ""
+
+
+class TestSmartProxy:
+    """Test SmartProxy."""
+
+    api_usr = ""
+    api_pwd = ""
+    check_url = ""
+    logger = init_logger(name="test")
+
+    app = SmartProxy(usr=api_usr, pwd=api_pwd, check_url=check_url, logger=logger)
+
+    def test_rnd(self, retry: int = 10) -> None:
+        """test rnd proxy and checking"""
+        success = False
+        for _ in range(retry):
+            self.app.rnd()
+            if self.app.check():
+                success = True
+                break
+        assert success is True
+
+    def test_sticky(self, retry: int = 10) -> None:
+        """test sticky proxy and checking"""
+        success = False
+        for _ in range(retry):
+            self.app.sticky()
+            if self.app.check():
+                success = True
+                break
+        assert success is True
+
+    def test_valid(self) -> None:
+        """test valid ip address"""
+        assert self.app.valid("127.0.0.1")
+        assert self.app.valid("1.1.2.333") is False
+
+    def test_ifconfig(self, retry: int = 10) -> None:
+        """test ifconfig checking"""
+        success = False
+        for _ in range(retry):
+            self.app.rnd()
+            if self.app.check():
+                if self.app.ifconfig():
+                    success = True
+                    break
+        assert success is True
+
+    def test_teoh(self, retry: int = 10) -> None:
+        """test teoh checking"""
+        success = False
+        for _ in range(retry):
+            self.app.rnd()
+            if self.app.check():
+                if self.app.teoh(self.app.addr):
+                    success = True
+                    break
+        assert success is True
+
+    def test_iphub(self, retry: int = 10) -> None:
+        """test iphub checking"""
+        success = False
+        for _ in range(retry):
+            self.app.rnd()
+            if self.app.check():
+                if self.app.iphub(self.app.addr):
+                    success = True
+                    break
+        assert success is True
+
+    def test_heartbeat(self) -> None:
+        """test heart beat start/stop"""
+        count_one = threading.active_count()
+        self.app.logger.info("count_one = %d", count_one)
+
+        self.app.heart_beat_start()
+
+        count_two = threading.active_count()
+        self.app.logger.info("count_two = %d", count_two)
+        assert count_two > count_one
+
+        self.app.logger.info("waiting 120 seconds...")
+        time.sleep(120)
+        self.app.heart_beat_stop()
+
+        time.sleep(30)
+        count_three = threading.active_count()
+        self.app.logger.info("count_three = %d", count_three)
+        assert count_three < count_two
+
+    def test_get_proxy(self) -> None:
+        """test get proxy"""
+        assert self.app.get_proxy() != ""
+
+
+if __name__ == "__main__":
+    TestSmartProxy()
