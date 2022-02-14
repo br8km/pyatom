@@ -1,6 +1,8 @@
 """Markov Text Generator."""
 
 import random
+import string
+from pathlib import Path
 from collections import defaultdict
 
 import regex as re
@@ -67,3 +69,40 @@ class Markov:
             new_words = self.walk_graph(self.markov_graph, distance=distance)
             if new_words:
                 return " ".join(new_words)
+
+
+class TestMarkov:
+    """TestCase for Markov text generator."""
+
+    dir_app = Path(__file__).parent
+
+    @staticmethod
+    def dummy(words: int = 1000) -> str:
+        """generate dummy text"""
+        return " ".join(
+            [
+                "".join(
+                    [
+                        random.choice(string.ascii_letters)
+                        for _ in range(random.randint(5, 10))
+                    ]
+                )
+                for _ in range(words)
+            ]
+        )
+
+    def test_markov(self) -> None:
+        """test markov generator"""
+        number = 10
+        text = self.dummy()
+        app = Markov(text=text)
+        for index in range(number):
+            length = random.randint(20, 30)
+            text = app.generate(distance=length)
+            num_words = len(text.split(" "))
+            print(f"<{index}>[{num_words}] {text}")
+            assert num_words > 0
+
+
+if __name__ == "__main__":
+    TestMarkov()
