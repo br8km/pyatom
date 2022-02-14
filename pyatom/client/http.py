@@ -1,40 +1,36 @@
 """
-    Doc string for browser client
-        - http requests client
-        - chrome headless anti-fingerprint browser client
+    Doc string for http client
 """
 
-import os
-from abc import ABC
 from pathlib import Path
-from typing import Any, Optional, Union
+from typing import Any, Optional
 
 import arrow
 import orjson
 import requests
 from requests import Response
 
-from pyatom.base.io import load_dict, save_dict
+from pyatom.base.io import load_dict, save_dict, file_del
 from pyatom.base.debug import Debugger
-from pyatom.base.log import Logger
+from pyatom.base.log import Logger, init_logger
 
 
 __all__ = (
     "Http",
-    "Chrome",
+    "Response",
 )
 
 
-class BaseClient(ABC):
-    """Base cls for Browser Client."""
+class Http:
+    """HTTP Client for requests"""
 
     __slots__ = (
-        "__dict__",
         "user_agent",
         "proxy_str",
         "time_out",
         "logger",
         "debugger",
+        "session",
         "data",
     )
 
@@ -42,39 +38,17 @@ class BaseClient(ABC):
         self,
         user_agent: str,
         proxy_str: str,
-        time_out: int,
-        logger: Optional[Logger],
-        debugger: Optional[Debugger],
+        logger: Logger,
+        time_out: int = 30,
+        debugger: Optional[Debugger] = None,
     ) -> None:
+        """Init Http Client."""
 
         self.user_agent = user_agent
         self.proxy_str = proxy_str
         self.time_out = time_out
-
         self.logger = logger
         self.debugger = debugger
-
-        self.data: dict = {"time_stamp": 0, "time_str": "", "req": {}, "res": {}}
-
-
-class Http(BaseClient):
-    """HTTP Client for requests"""
-
-    def __init__(
-        self,
-        user_agent: str,
-        proxy_str: str,
-        time_out: int = 30,
-        logger: Optional[Logger] = None,
-        debugger: Optional[Debugger] = None,
-    ) -> None:
-        super().__init__(
-            user_agent=user_agent,
-            proxy_str=proxy_str,
-            time_out=time_out,
-            logger=logger,
-            debugger=debugger,
-        )
 
         self.session = requests.Session()
 
@@ -86,6 +60,8 @@ class Http(BaseClient):
             proxy_dict = {"http": f"http://{proxy_str}", "https": f"http://{proxy_str}"}
             self.session.proxies = proxy_dict
 
+        self.data: dict = {"time_stamp": 0, "time_str": "", "req": {}, "res": {}}
+
     def header_set(self, key: str, value: Optional[str] = None) -> None:
         """set header for session"""
         if value is not None:
@@ -93,6 +69,14 @@ class Http(BaseClient):
         else:
             if key in self.session.headers.keys():
                 del self.session.headers[key]
+
+    def header_get(self, key: str) -> str:
+        """Get header value for key string."""
+        if key and key in self.session.headers.keys():
+            value = self.session.headers[key]
+            if value:
+                return value
+        return ""
 
     def h_accept(self, value: str = "*/*") -> None:
         """set heaer `Accept`"""
@@ -140,13 +124,13 @@ class Http(BaseClient):
         """set cookie for session"""
         self.session.cookies.set(key, value)
 
-    def cookie_load(self, file_cookie: Union[str, Path]) -> None:
+    def cookie_load(self, file_cookie: Path) -> None:
         """load session cookie from local file"""
-        if os.path.isfile(file_cookie):
+        if file_cookie.is_file():
             cookie = load_dict(file_cookie)
             self.session.cookies.update(cookie)
 
-    def cookie_save(self, file_cookie: Union[str, Path]) -> None:
+    def cookie_save(self, file_cookie: Path) -> None:
         """save session cookies into local file"""
         save_dict(file_cookie, dict(self.session.cookies))
 
@@ -189,7 +173,7 @@ class Http(BaseClient):
                 "headers": headers,
                 "cookies": cookies,
             }
-            self.debugger.sid = self.debugger.sid_new()
+            self.debugger.id_add()
             self.debugger.save(self.data)
 
     def save_res(self, response: Response, debug: bool = False) -> None:
@@ -209,7 +193,6 @@ class Http(BaseClient):
                 "text": response.text,
                 "json": res_json,
             }
-            # suppose debugger is already initialized.
             self.debugger.save(self.data)
 
     def req(
@@ -225,14 +208,11 @@ class Http(BaseClient):
             with self.session.request(method, url, **kwargs) as response:
                 code = response.status_code
                 length = len(response.text)
-                message = f"[{code}]<{length}>{response.url}"
-                if self.logger:
-                    self.logger.info(message)
+                self.logger.info("[%d]<%d>%s", code, length, response.url)
                 self.save_res(response, debug)
                 return response
         except requests.RequestException as err:
-            if self.logger:
-                self.logger.error(err)
+            self.logger.exception(err)
         return response
 
     def get(self, url: str, debug: bool = False, **kwargs: Any) -> Optional[Response]:
@@ -274,21 +254,118 @@ class Http(BaseClient):
         return self.req("DELETE", url, debug=debug, **kwargs)
 
 
-class Chrome(BaseClient):
-    """Chrome Browser Client."""
+class TestHttp:
+    """TestCase for Http Client and Chrome Client."""
 
-    def __init__(
-        self,
-        user_agent: str,
-        proxy_str: str,
-        time_out: int,
-        logger: Optional[Logger],
-        debugger: Optional[Debugger],
-    ) -> None:
-        super().__init__(
-            user_agent=user_agent,
-            proxy_str=proxy_str,
-            time_out=time_out,
-            logger=logger,
-            debugger=debugger,
+    user_agent = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/78.0.3904.97 Safari/537.36"
+    proxy_str = ""
+
+    logger = init_logger(name="test")
+    dir_app = Path(__file__).parent
+    debugger = Debugger(path=dir_app, name="test")
+
+    def to_client(self) -> Http:
+        """Get Http Client."""
+        return Http(
+            user_agent=self.user_agent,
+            proxy_str=self.proxy_str,
+            logger=self.logger,
+            debugger=self.debugger,
         )
+
+    def test_headers(self) -> None:
+        """test Http headers"""
+        client = self.to_client()
+
+        test_value = "hello"
+
+        client.h_accept(test_value)
+        assert client.header_get("Accept") == test_value
+
+        client.h_data()
+        assert "application/x-www-form-urlencoded" in client.header_get("Content-Type")
+
+        client.h_json()
+        assert "application/json" in client.header_get("Content-Type")
+
+        client.h_encoding(test_value)
+        assert client.header_get("Accept-Encoding") == test_value
+
+        client.h_lang(test_value)
+        assert client.header_get("Accept-Language") == test_value
+
+        client.h_origin(test_value)
+        assert client.header_get("Origin") == test_value
+
+        client.h_refer(test_value)
+        assert client.header_get("Referer") == test_value
+
+        client.h_type(test_value)
+        assert client.header_get("Content-Type") == test_value
+
+        client.h_xml(test_value)
+        assert client.header_get("X-Requested-With") == test_value
+        client.h_xml()
+        assert client.header_get("X-Requested-With") == "XMLHttpRequest"
+
+    def test_http_cookies(self) -> None:
+        """test Http cookies set/save/load"""
+        client = self.to_client()
+
+        cookie_dict = {"name": "Ben", "age": "25"}
+        for key, value in cookie_dict.items():
+            client.cookie_set(key, value)
+
+        for key, value in cookie_dict.items():
+            assert client.session.cookies.get(key) == value
+
+        file_cookie = Path(self.dir_app, "cookies.json")
+        client.cookie_save(file_cookie)
+        client = self.to_client()
+        client.cookie_load(file_cookie)
+
+        for key, value in cookie_dict.items():
+            assert client.session.cookies.get(key) == value
+
+        assert file_del(file_cookie) is True
+
+    def test_http_requests(self) -> None:
+        """test Http virious request methods"""
+        client = self.to_client()
+        client.h_accept("application/json")
+
+        url_get = "http://httpbin.org/get"
+        response = client.get(url_get)
+        assert response and response.json().get("url") == url_get
+
+        url_post = "http://httpbin.org/post"
+        payload: dict = {}
+        response = client.post(url_post, data=payload)
+        assert response and response.json().get("url") == url_post
+
+        url_delete = "http://httpbin.org/delete"
+        response = client.delete(url_delete)
+        assert response and response.json().get("url") == url_delete
+
+        url_patch = "http://httpbin.org/patch"
+        response = client.patch(url_patch)
+        assert response and response.json().get("url") == url_patch
+
+        url_put = "http://httpbin.org/put"
+        response = client.put(url_put)
+        assert response and response.json().get("url") == url_put
+
+    def test_http_debugger(self) -> None:
+        """test Http debugger"""
+        client = self.to_client()
+        url = "http://httpbin.org/get"
+        client.get(url, debug=True)
+        assert client.debugger is not None
+        assert client.debugger.id_str != ""
+
+        print(orjson.dumps(client.data, option=orjson.OPT_INDENT_2))
+        assert client.debugger.del_files()
+
+
+if __name__ == "__main__":
+    TestHttp()
