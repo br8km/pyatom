@@ -2,7 +2,6 @@
 
 import random
 import string
-from pathlib import Path
 from collections import defaultdict
 
 import regex as re
@@ -73,8 +72,6 @@ class Markov:
 
 class TestMarkov:
     """TestCase for Markov text generator."""
-
-    dir_app = Path(__file__).parent
 
     @staticmethod
     def dummy(words: int = 1000) -> str:
