@@ -12,6 +12,9 @@ from email.utils import make_msgid
 from email import encoders
 
 
+__all__ = ("MailSender",)
+
+
 class MailSender:
     """Sender email via SMTP."""
 
@@ -166,3 +169,79 @@ class MailSender:
 
         self.disconnect()
         #  print("Connection closed")
+
+
+class TestSMTP:
+    """TestCase for SMTP Main Sender."""
+
+    dir_app = Path(__file__).parent
+    file_temp = Path(dir_app, "temp.file")
+
+    postfix_host = ""
+    postfix_port = 0
+    postfix_usr = ""
+    postfix_pwd = ""
+    postfix_ssl = False
+
+    def prepare_temp_file(self) -> bool:
+        """Generate temp file."""
+        with open(self.file_temp, "w", encoding="utf8") as file:
+            file.write("hello world")
+        return self.file_temp.is_file()
+
+    def delete_temp_file(self) -> bool:
+        """Delete temp file."""
+        self.file_temp.unlink(missing_ok=True)
+        return self.file_temp.is_file() is False
+
+    def test_mail_sender(self) -> None:
+        """Test Mail Sender."""
+        client = MailSender(
+            host=self.postfix_host,
+            port=self.postfix_port,
+            usr=self.postfix_usr,
+            pwd=self.postfix_pwd,
+            use_ssl=self.postfix_ssl,
+        )
+
+        subject = "subject"
+        body = "body"
+        html_text = ""
+        sender_name = "Support"
+        sender_email = "support@" + self.postfix_host
+        recipient = "friend@" + self.postfix_host
+
+        # plain text message
+        client.set_message(
+            plain_text=body,
+            html_text=html_text,
+            subject=subject,
+            sender_email=sender_email,
+            sender_name=sender_name,
+            recipient=recipient,
+            list_attachment=[],
+            id_seed="",
+        )
+        client.connect()
+        client.send(recipient)
+
+        # html text message
+        assert self.prepare_temp_file()
+        html_text = f"<html><head><title>{subject}</title></head><body><div align='center'>{body}</div></body></html>"
+        client.set_message(
+            plain_text=body,
+            html_text=html_text,
+            subject=subject,
+            sender_email=sender_email,
+            sender_name=sender_name,
+            recipient=recipient,
+            list_attachment=[self.file_temp],
+            id_seed="",
+        )
+        client.connect()
+        client.send(recipient)
+        assert self.delete_temp_file()
+
+
+if __name__ == "__main__":
+    TestSMTP()
