@@ -15,7 +15,7 @@ keywords = ["atom", "common"]
 # *mypy* `https://mypy.readthedocs.io/en/stable/config_file.html`
 [tool.mypy]
 python_version = 3.9
-files = ["src/**/*.py","tests/**/*.py"]
+files = ["pyatom/**/*.py"]
 warn_return_any = true
 warn_unused_configs = true
 ignore_missing_imports = true
