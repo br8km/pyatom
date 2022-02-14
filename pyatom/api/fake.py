@@ -27,10 +27,12 @@ class FakeFace:
 
         self.session = requests.Session()
         self.session.headers.update({"User-Agent": user_agent})
-        self.session.proxies = {
-            "http": f"http://{proxy_str}",
-            "https": f"http://{proxy_str}",
-        }
+
+        if proxy_str:
+            self.session.proxies = {
+                "http": f"http://{proxy_str}",
+                "https": f"http://{proxy_str}",
+            }
 
     def http_get(self, url: str) -> dict:
         """http get for response"""
@@ -62,3 +64,20 @@ class FakeFace:
                 return image_url
 
         return ""
+
+
+class TestFake:
+    """TestCase for FakeFace."""
+
+    user_agent = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/78.0.3904.97 Safari/537.36"
+
+    def test_fakeface(self) -> None:
+        """Test FakeFace."""
+
+        app = FakeFace(user_agent=self.user_agent, proxy_str="")
+        image_url = app.generate()
+        assert image_url != ""
+
+
+if __name__ == "__main__":
+    TestFake()
