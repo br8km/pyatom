@@ -109,4 +109,4 @@ class TestUtils:
 
 
 if __name__ == "__main__":
-    app = TestUtils()
+    TestUtils()

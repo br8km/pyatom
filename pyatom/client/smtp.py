@@ -11,6 +11,7 @@ from email.mime.multipart import MIMEMultipart
 from email.utils import make_msgid
 from email import encoders
 
+from pyatom.config import ConfigManager
 
 __all__ = ("MailSender",)
 
@@ -175,13 +176,10 @@ class TestSMTP:
     """TestCase for SMTP Main Sender."""
 
     dir_app = Path(__file__).parent
-    file_temp = Path(dir_app, "temp.file")
+    file_config = Path(dir_app.parent.parent, "protect", "config.json")
+    config = ConfigManager(file_config).load()
 
-    postfix_host = ""
-    postfix_port = 0
-    postfix_usr = ""
-    postfix_pwd = ""
-    postfix_ssl = False
+    file_temp = Path(dir_app, "temp.file")
 
     def prepare_temp_file(self) -> bool:
         """Generate temp file."""
@@ -197,19 +195,19 @@ class TestSMTP:
     def test_mail_sender(self) -> None:
         """Test Mail Sender."""
         client = MailSender(
-            host=self.postfix_host,
-            port=self.postfix_port,
-            usr=self.postfix_usr,
-            pwd=self.postfix_pwd,
-            use_ssl=self.postfix_ssl,
+            host=self.config.postfix_domain,
+            port=self.config.postfix_port_smtp,
+            usr=self.config.postfix_usr,
+            pwd=self.config.postfix_pwd,
+            use_ssl=self.config.postfix_ssl,
         )
 
         subject = "subject"
         body = "body"
         html_text = ""
         sender_name = "Support"
-        sender_email = "support@" + self.postfix_host
-        recipient = "friend@" + self.postfix_host
+        sender_email = "support@" + self.config.postfix_domain
+        recipient = "friend@" + self.config.postfix_domain
 
         # plain text message
         client.set_message(

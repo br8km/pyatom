@@ -25,6 +25,7 @@ from tldextract import extract
 from pyatom.base.io import save_list_dict, load_list_dict
 from pyatom.base.log import Logger, init_logger
 from pyatom.base.proxy import HttpProxy, to_auth_header
+from pyatom.config import ConfigManager
 
 
 __all__ = (
@@ -323,10 +324,10 @@ class TestPinger:
     """TestCase for Pinger."""
 
     dir_app = Path(__file__).parent
-    logger = init_logger(name="test")
+    file_config = Path(dir_app.parent.parent, "protect", "config.json")
+    config = ConfigManager(file_config).load()
 
-    user_agent = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/78.0.3904.97 Safari/537.36"
-    proxy_str = "bxusr017:bxpwd017@172.245.255.158:80"
+    logger = init_logger(name="test")
 
     list_service_url = [
         "http://rpc.pingomatic.com",
@@ -337,9 +338,11 @@ class TestPinger:
 
     def test_base_pinger(self) -> None:
         """Test BasePinger."""
-        pinger = BasePinger(list_ua=[self.user_agent], list_px=[self.proxy_str])
-        assert self.user_agent == pinger.rnd_ua
-        assert self.proxy_str == pinger.rnd_px
+        pinger = BasePinger(
+            list_ua=[self.config.user_agent], list_px=[self.config.proxy_str]
+        )
+        assert self.config.user_agent == pinger.rnd_ua
+        assert self.config.proxy_str == pinger.rnd_px
 
         assert pinger.normalize("ftp://hello.com") == ""
         assert pinger.normalize("http://bing.com/") == "http://bing.com"
@@ -355,7 +358,9 @@ class TestPinger:
     def test_xml_pinger(self) -> None:
         """Test XMLPinger."""
         pinger = XMLPinger(
-            list_ua=[self.user_agent], list_px=[self.proxy_str], logger=self.logger
+            list_ua=[self.config.user_agent],
+            list_px=[self.config.proxy_str],
+            logger=self.logger,
         )
         list_service = [pinger.to_service(url) for url in self.list_service_url]
         assert len(list_service) == len(self.list_service_url)

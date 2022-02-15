@@ -116,4 +116,4 @@ class TestDebugger:
 
 
 if __name__ == "__main__":
-    app = TestDebugger()
+    TestDebugger()

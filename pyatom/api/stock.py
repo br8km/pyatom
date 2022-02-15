@@ -11,6 +11,7 @@ import requests
 
 from pyatom.base.chars import hash2s
 from pyatom.base.io import dir_create, dir_del, load_dict, save_dict
+from pyatom.config import ConfigManager
 
 
 __all__ = ("Pixabay",)
@@ -650,13 +651,14 @@ class TestStock:
     """TestCase for Stock api wrappers."""
 
     dir_app = Path(__file__).parent
-    dir_cache = Path(dir_app, "cache")
+    file_config = Path(dir_app.parent.parent, "protect", "config.json")
+    config = ConfigManager(file_config).load()
 
-    key_pixabay = ""
+    dir_cache = Path(dir_app, "cache")
 
     def test_base_cache(self) -> None:
         """Test BaseStock from Pixabay."""
-        app = Pixabay(api_key=self.key_pixabay, dir_cache=self.dir_cache)
+        app = Pixabay(api_key=self.config.pixabay_key, dir_cache=self.dir_cache)
 
         request_url = "http://bing.com"
         response_data = {"url": request_url}
@@ -667,7 +669,7 @@ class TestStock:
 
     def test_pixabay(self) -> None:
         """Test Pixabay."""
-        app = Pixabay(api_key=self.key_pixabay, dir_cache=self.dir_cache)
+        app = Pixabay(api_key=self.config.pixabay_key, dir_cache=self.dir_cache)
 
         keyword = "yellow flower"
 

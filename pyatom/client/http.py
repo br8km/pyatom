@@ -13,6 +13,7 @@ from requests import Response
 from pyatom.base.io import load_dict, save_dict, file_del
 from pyatom.base.debug import Debugger
 from pyatom.base.log import Logger, init_logger
+from pyatom.config import ConfigManager
 
 
 __all__ = (
@@ -257,18 +258,18 @@ class Http:
 class TestHttp:
     """TestCase for Http Client and Chrome Client."""
 
-    user_agent = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/78.0.3904.97 Safari/537.36"
-    proxy_str = ""
+    dir_app = Path(__file__).parent
+    file_config = Path(dir_app.parent.parent, "protect", "config.json")
+    config = ConfigManager(file_config).load()
 
     logger = init_logger(name="test")
-    dir_app = Path(__file__).parent
     debugger = Debugger(path=dir_app, name="test")
 
     def to_client(self) -> Http:
         """Get Http Client."""
         return Http(
-            user_agent=self.user_agent,
-            proxy_str=self.proxy_str,
+            user_agent=self.config.user_agent,
+            proxy_str=self.config.proxy_str,
             logger=self.logger,
             debugger=self.debugger,
         )

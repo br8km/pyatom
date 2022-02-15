@@ -4,12 +4,14 @@
 
 import time
 import base64
+from pathlib import Path
 from abc import ABC, abstractmethod
 from urllib.parse import urlencode
 
 import requests
 
 from pyatom.base.log import Logger, init_logger
+from pyatom.config import ConfigManager
 
 
 __all__ = ("TwoCaptcha",)
@@ -161,8 +163,9 @@ class TwoCaptcha(AbsCaptcha):
 class TestCaptcha:
     """Test Captcha APIs."""
 
-    # Set key before run test cases.
-    key_2captcha = ""
+    dir_app = Path(__file__).parent
+    file_config = Path(dir_app.parent.parent, "protect", "config.json")
+    config = ConfigManager(file_config).load()
 
     logger = init_logger(name="test")
 
@@ -189,7 +192,7 @@ class TestCaptcha:
 
     def test_twocaptcha(self) -> None:
         """Test 2captcha.com api wrapper."""
-        app = TwoCaptcha(api_key=self.key_2captcha, logger=self.logger)
+        app = TwoCaptcha(api_key=self.config.key_2captcha, logger=self.logger)
         assert app.balance() > 0
 
         assert self._recaptcha(app=app)

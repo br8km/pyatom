@@ -292,4 +292,4 @@ class TestIO:
 
 
 if __name__ == "__main__":
-    app = TestIO()
+    TestIO()

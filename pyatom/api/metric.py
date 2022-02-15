@@ -3,11 +3,13 @@
 """
     Metrics for Domain, Url, etc. like: DomDetailer API
 """
+from pathlib import Path
 
 import requests
 
 from pyatom.base.utils import print2
 from pyatom.base.log import Logger, init_logger
+from pyatom.config import ConfigManager
 
 
 __all__ = ("DomDetailer",)
@@ -86,13 +88,19 @@ class DomDetailer:
 class TestMetric:
     """TestCase for Metric api wrappers."""
 
-    key_domdetailer = ""
+    dir_app = Path(__file__).parent
+    file_config = Path(dir_app.parent.parent, "protect", "config.json")
+    config = ConfigManager(file_config).load()
 
     logger = init_logger(name="test")
 
     def test_domdetailer(self) -> None:
         """Test DomDetailer."""
-        app = DomDetailer(app="app", key=self.key_domdetailer, logger=self.logger)
+        app = DomDetailer(
+            app=self.config.domdetailer_app,
+            key=self.config.domdetailer_key,
+            logger=self.logger,
+        )
         balance = app.balance()
         print(f"domdetailer.balance = {balance}")
         assert balance > 0

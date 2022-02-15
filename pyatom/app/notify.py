@@ -15,6 +15,7 @@ from pyatom.base.chars import str_rnd
 from pyatom.base.io import dir_create, file_del, save_str
 from pyatom.base.log import Logger, init_logger
 from pyatom.client.smtp import MailSender
+from pyatom.config import ConfigManager
 
 
 __all__ = (
@@ -239,9 +240,12 @@ class TwilioSender(BaseSender):
 class TestNotify:
     """TestCase for Notify."""
 
+    dir_app = Path(__file__).parent
+    file_config = Path(dir_app.parent.parent, "protect", "config.json")
+    config = ConfigManager(file_config).load()
+
     logger = init_logger(name="test")
-    dir_bak = Path(__file__).parent
-    file_temp = Path(dir_bak, "temp.file")
+    file_temp = Path(dir_app, "temp.file")
 
     def create_temp_file(self) -> bool:
         """Create temp file as attachment."""
@@ -255,19 +259,20 @@ class TestNotify:
         """Test postfix sender."""
         assert self.create_temp_file()
         postfix = PostfixSender(
-            host="domain.com",
-            port=25,
-            usr="",
-            pwd="",
-            ssl=False,
+            host=self.config.postfix_domain,
+            port=self.config.postfix_port_smtp,
+            usr=self.config.postfix_usr,
+            pwd=self.config.postfix_pwd,
+            ssl=self.config.postfix_ssl,
             logger=self.logger,
-            dir_bak=self.dir_bak,
+            dir_bak=self.dir_app,
         )
         files = [postfix.file_str(self.file_temp)]
         notice = postfix.create_notice(
             title="", content="content", files=files, urgency=0
         )
-        assert postfix.send(notice, email_to="user@domain.com", save=True)
+        email_to = "friend@" + self.config.postfix_domain
+        assert postfix.send(notice, email_to=email_to, save=True)
         file_del(self.file_temp)
         assert self.file_temp.is_file() is False
 
@@ -278,17 +283,18 @@ class TestNotify:
         """Test Twilio sender."""
         assert self.create_temp_file()
         twilio = TwilioSender(
-            sid="",
-            token="",
-            number="",
+            sid=self.config.twilio_sid,
+            token=self.config.twilio_token,
+            number=self.config.twilio_number,
             logger=self.logger,
-            dir_bak=self.dir_bak,
+            dir_bak=self.dir_app,
         )
         files = [twilio.file_str(self.file_temp)]
         notice = twilio.create_notice(
             title="", content="content", files=files, urgency=0
         )
-        assert twilio.send(notice, number_to="", save=True)
+        number_to = "+8613900006666"
+        assert twilio.send(notice, number_to=number_to, save=True)
         file_del(self.file_temp)
         assert self.file_temp.is_file() is False
 

@@ -6,10 +6,13 @@
 """
 
 import os
+from pathlib import Path
 from urllib.parse import urlencode
 
 import requests
 import regex as re
+
+from pyatom.config import ConfigManager
 
 
 __all__ = ("FakeFace",)
@@ -69,12 +72,15 @@ class FakeFace:
 class TestFake:
     """TestCase for FakeFace."""
 
-    user_agent = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/78.0.3904.97 Safari/537.36"
+    dir_app = Path(__file__).parent
+    file_config = Path(dir_app.parent.parent, "protect", "config.json")
+    config = ConfigManager(file_config).load()
 
     def test_fakeface(self) -> None:
         """Test FakeFace."""
-
-        app = FakeFace(user_agent=self.user_agent, proxy_str="")
+        app = FakeFace(
+            user_agent=self.config.user_agent, proxy_str=self.config.proxy_str
+        )
         image_url = app.generate()
         assert image_url != ""
 

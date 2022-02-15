@@ -389,4 +389,4 @@ class TestORM:
 
 
 if __name__ == "__main__":
-    app = TestORM()
+    TestORM()

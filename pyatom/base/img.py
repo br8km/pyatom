@@ -255,4 +255,4 @@ class TestRehash:
 
 
 if __name__ == "__main__":
-    app = TestRehash()
+    TestRehash()

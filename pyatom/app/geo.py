@@ -49,8 +49,8 @@ class TestGeoip:
 
     ip_addr = "172.245.255.158"
 
-    dir_root = Path(__file__).parent
-    file_geo = Path(dir_root.parent.parent, "data", "GeoLite2-City.mmdb")
+    dir_app = Path(__file__).parent
+    file_geo = Path(dir_app.parent.parent, "data", "GeoLite2-City.mmdb")
 
     def test_geoip(self) -> None:
         """Test geoip."""

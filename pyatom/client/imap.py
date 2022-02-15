@@ -6,6 +6,7 @@ import time
 import random
 import ssl
 import imaplib
+from pathlib import Path
 from email import message_from_bytes, message_from_string
 from email.header import decode_header
 from email.message import Message
@@ -19,6 +20,7 @@ import socks
 
 from pyatom.base.debug import Debugger
 from pyatom.base.proxy import Proxy
+from pyatom.config import ConfigManager
 
 
 __all__ = ("PostfixImap",)
@@ -434,21 +436,18 @@ class PostfixImap(ImapClient):
 class TestImap:
     """TestCase for Imap Client."""
 
-    postfix_domain = ""
-    postfix_port = 0
-    postfix_usr = ""
-    postfix_pwd = ""
-
-    proxy_str = ""
+    dir_app = Path(__file__).parent
+    file_config = Path(dir_app.parent.parent, "protect", "config.json")
+    config = ConfigManager(file_config).load()
 
     def to_client(self) -> PostfixImap:
         """Get PostfixImap Client."""
         return PostfixImap(
-            host=self.postfix_domain,
-            port=self.postfix_port,
-            usr=self.postfix_usr,
-            pwd=self.postfix_pwd,
-            proxy=Proxy(proxy_str=self.proxy_str),
+            host=self.config.postfix_domain,
+            port=self.config.postfix_port_imap,
+            usr=self.config.postfix_usr,
+            pwd=self.config.postfix_pwd,
+            proxy=Proxy(proxy_str=self.config.proxy_str),
         )
 
     def test_postfiximap(self) -> None:

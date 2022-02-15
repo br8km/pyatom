@@ -14,6 +14,7 @@ from arrow import Arrow
 
 __all__ = (
     "smart_delay",
+    "utc_offset",
     "Timer",
 )
 
@@ -99,6 +100,13 @@ class TestTimer:
         assert end > start
 
     @staticmethod
+    def test_utc_offset() -> None:
+        """Test UTC offset"""
+        time_zone = "Asia/hong_kong"
+        offset = utc_offset(time_zone)
+        assert offset == 8
+
+    @staticmethod
     def test_timer() -> None:
         """Test timer cls."""
         timer = Timer()
@@ -113,4 +121,4 @@ class TestTimer:
 
 
 if __name__ == "__main__":
-    app = TestTimer()
+    TestTimer()

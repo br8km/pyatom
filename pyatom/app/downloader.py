@@ -14,6 +14,7 @@ from tqdm import tqdm
 
 from pyatom.base.io import dir_create, file_del
 from pyatom.base.log import Logger, init_logger
+from pyatom.config import ConfigManager
 
 
 __all__ = ("DownLoader",)
@@ -164,16 +165,15 @@ class DownLoader:
 class TestDownloader:
     """Test Downloader."""
 
-    user_agent = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/78.0.3904.97 Safari/537.36"
-
-    dir_root = Path(__file__).parent
-    proxy_str = ""
+    dir_app = Path(__file__).parent
+    file_config = Path(dir_app.parent.parent, "protect", "config.json")
+    config = ConfigManager(file_config).load()
 
     def test_downloader(self) -> None:
         """test downloader by direct or ranges downloading"""
         app = DownLoader(
-            user_agent=self.user_agent,
-            proxy_str=self.proxy_str,
+            user_agent=self.config.user_agent,
+            proxy_str=self.config.proxy_str,
             logger=init_logger(name="test"),
         )
 
@@ -181,14 +181,14 @@ class TestDownloader:
         file_url_ranges = "http://ipv4.download.thinkbroadband.com/10MB.zip"
         file_url_ranges = "http://s3.amazonaws.com/alexa-static/top-1m.csv.zip"
 
-        file_tmp = Path(self.dir_root, "ranges.tmp")
+        file_tmp = Path(self.dir_app, "ranges.tmp")
         assert app.download_ranges(file_url=file_url_ranges, file_out=file_tmp)
         file_del(file_tmp)
         assert file_tmp.is_file() is False
 
         file_url_direct = "https://www.google.com/images/branding/googlelogo/2x/googlelogo_color_92x30dp.png"
         file_url_direct = "https://raw.githubusercontent.com/ableco/test-files/master/images/test-image-png_4032x3024.png"
-        file_tmp = Path(self.dir_root, "direct.tmp")
+        file_tmp = Path(self.dir_app, "direct.tmp")
         assert app.download_direct(file_url=file_url_direct, file_out=file_tmp)
         file_del(file_tmp)
         assert file_tmp.is_file() is False

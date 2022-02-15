@@ -157,4 +157,4 @@ class TestLogger:
 
 if __name__ == "__main__":
     # pytest log.py
-    app = TestLogger()
+    TestLogger()

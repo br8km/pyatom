@@ -2,8 +2,9 @@
     SmartProxy.com Service API
 """
 
-import threading
 import time
+import threading
+from pathlib import Path
 from ipaddress import ip_address
 from typing import Optional, Union
 
@@ -13,6 +14,7 @@ from requests import Response, Session, RequestException
 
 from pyatom.base.chars import str_rnd
 from pyatom.base.log import Logger, init_logger
+from pyatom.config import ConfigManager
 
 
 __all__ = ("SmartProxy",)
@@ -225,12 +227,18 @@ class SmartProxy:
 class TestSmartProxy:
     """Test SmartProxy."""
 
-    api_usr = ""
-    api_pwd = ""
-    check_url = ""
+    dir_app = Path(__file__).parent
+    file_config = Path(dir_app.parent.parent, "protect", "config.json")
+    config = ConfigManager(file_config).load()
+
     logger = init_logger(name="test")
 
-    app = SmartProxy(usr=api_usr, pwd=api_pwd, check_url=check_url, logger=logger)
+    app = SmartProxy(
+        usr=config.smart_proxy_usr,
+        pwd=config.smart_proxy_pwd,
+        check_url=config.smart_proxy_check,
+        logger=logger,
+    )
 
     def test_rnd(self, retry: int = 10) -> None:
         """test rnd proxy and checking"""
