@@ -76,15 +76,24 @@ class ConfigManager:
         return file_config.is_file()
 
     @staticmethod
-    def to_blank(config: Config) -> Config:
-        """Get Blank Config."""
+    def set_default(config: Config) -> Config:
+        """Set Default Value for Config."""
         for key, value in config.__dict__.items():
             if isinstance(value, str):
                 setattr(config, key, "")
             if isinstance(value, int):
                 setattr(config, key, 0)
+            if isinstance(value, float):
+                setattr(config, key, 0.0)
             if isinstance(value, bool):
                 setattr(config, key, False)
+            if isinstance(value, list):
+                setattr(config, key, [])
+            if isinstance(value, set):
+                setattr(config, key, set())
+            if isinstance(value, dict):
+                setattr(config, key, {})
+
         return config
 
 
@@ -100,7 +109,7 @@ class TestConfig:
         """Test ConfigManger."""
         app = ConfigManager()
         config = app.load(self.file_config)
-        blank = app.to_blank(config)
+        blank = app.set_default(config)
         app.save(config=blank, file_config=self.file_blank)
 
 
