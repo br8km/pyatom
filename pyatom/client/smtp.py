@@ -225,6 +225,7 @@ class TestSMTP:
 
         # html text message
         assert self.prepare_temp_file()
+
         html_text = f"<html><head><title>{subject}</title></head><body><div align='center'>{body}</div></body></html>"
         client.set_message(
             plain_text=body,
@@ -238,6 +239,7 @@ class TestSMTP:
         )
         client.connect()
         client.send(recipient)
+
         assert self.delete_temp_file()
 
 
