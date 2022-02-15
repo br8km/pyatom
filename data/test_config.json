@@ -16,7 +16,9 @@
         "twilio_token": "",
         "twilio_number": "",
         "domdetailer_app": "",
-        "domdetailer_key": ""
+        "domdetailer_key": "",
+        "user_agent": "",
+        "proxy_str": ""
 
 }
 
