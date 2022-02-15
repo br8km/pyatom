@@ -33,6 +33,7 @@ class Config:
     twilio_number: str
     domdetailer_app: str
     domdetailer_key: str
+    pixabay_key: str
     user_agent: str
     proxy_str: str
 
@@ -65,6 +66,7 @@ class ConfigManager:
             twilio_number=data.get("twilio_number", ""),
             domdetailer_app=data.get("domdetailer_app", ""),
             domdetailer_key=data.get("domdetailer_key", ""),
+            pixabay_key=data.get("pixabay_key", ""),
             user_agent=data.get("user_agent", ""),
             proxy_str=data.get("proxy_str", ""),
         )
