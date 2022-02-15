@@ -242,7 +242,7 @@ class TestNotify:
 
     dir_app = Path(__file__).parent
     file_config = Path(dir_app.parent.parent, "protect", "config.json")
-    config = ConfigManager(file_config).load()
+    config = ConfigManager().load(file_config)
 
     logger = init_logger(name="test")
     file_temp = Path(dir_app, "temp.file")

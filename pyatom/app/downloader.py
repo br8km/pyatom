@@ -167,7 +167,7 @@ class TestDownloader:
 
     dir_app = Path(__file__).parent
     file_config = Path(dir_app.parent.parent, "protect", "config.json")
-    config = ConfigManager(file_config).load()
+    config = ConfigManager().load(file_config)
 
     def test_downloader(self) -> None:
         """test downloader by direct or ranges downloading"""

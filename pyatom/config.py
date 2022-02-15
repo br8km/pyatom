@@ -41,13 +41,10 @@ class Config:
 class ConfigManager:
     """Config Manager."""
 
-    def __init__(self, file_config: Path) -> None:
-        """Init ConfigManager."""
-        self.file_config = file_config
-
-    def load(self) -> Config:
+    @staticmethod
+    def load(file_config: Path) -> Config:
         """Load config from local file."""
-        data = load_dict(self.file_config)
+        data = load_dict(file_config)
         return Config(
             key_2captcha=data.get("key_2captcha", ""),
             smart_proxy_usr=data.get("smart_proxy_usr", ""),
@@ -71,8 +68,41 @@ class ConfigManager:
             proxy_str=data.get("proxy_str", ""),
         )
 
-    def save(self, config: Config) -> bool:
+    @staticmethod
+    def save(config: Config, file_config: Path) -> bool:
         """Save config into local file."""
         data = asdict(config)
-        save_dict(file_name=self.file_config, file_data=data)
-        return self.file_config.is_file()
+        save_dict(file_name=file_config, file_data=data)
+        return file_config.is_file()
+
+    @staticmethod
+    def to_blank(config: Config) -> Config:
+        """Get Blank Config."""
+        for key, value in config.__dict__.items():
+            if isinstance(value, str):
+                setattr(config, key, "")
+            if isinstance(value, int):
+                setattr(config, key, 0)
+            if isinstance(value, bool):
+                setattr(config, key, False)
+        return config
+
+
+class TestConfig:
+    """Test Config."""
+
+    dir_app = Path(__file__).parent
+
+    file_config = Path(dir_app.parent, "protect", "config.json")
+    file_blank = Path(dir_app.parent, "data", "config.json")
+
+    def test_config_manager(self) -> None:
+        """Test ConfigManger."""
+        app = ConfigManager()
+        config = app.load(self.file_config)
+        blank = app.to_blank(config)
+        app.save(config=blank, file_config=self.file_blank)
+
+
+if __name__ == "__main__":
+    TestConfig()

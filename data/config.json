@@ -1,0 +1,22 @@
+{
+  "key_2captcha": "",
+  "smart_proxy_usr": "",
+  "smart_proxy_pwd": "",
+  "smart_proxy_check": "",
+  "yourls_domain": "",
+  "yourls_key": "",
+  "postfix_domain": "",
+  "postfix_port_imap": 0,
+  "postfix_port_smtp": 0,
+  "postfix_usr": "",
+  "postfix_pwd": "",
+  "postfix_ssl": false,
+  "twilio_sid": "",
+  "twilio_token": "",
+  "twilio_number": "",
+  "domdetailer_app": "",
+  "domdetailer_key": "",
+  "pixabay_key": "",
+  "user_agent": "",
+  "proxy_str": ""
+}
