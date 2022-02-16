@@ -16,26 +16,26 @@ __all__ = (
 class Config:
     """Config."""
 
-    key_2captcha: str
-    smart_proxy_usr: str
-    smart_proxy_pwd: str
-    smart_proxy_check: str
-    yourls_domain: str
-    yourls_key: str
-    postfix_domain: str
-    postfix_port_imap: int
-    postfix_port_smtp: int
-    postfix_usr: str
-    postfix_pwd: str
-    postfix_ssl: bool
-    twilio_sid: str
-    twilio_token: str
-    twilio_number: str
-    domdetailer_app: str
-    domdetailer_key: str
-    pixabay_key: str
-    user_agent: str
-    proxy_str: str
+    key_2captcha: str = ""
+    smart_proxy_usr: str = ""
+    smart_proxy_pwd: str = ""
+    smart_proxy_check: str = ""
+    yourls_domain: str = ""
+    yourls_key: str = ""
+    postfix_domain: str = ""
+    postfix_port_imap: int = 0
+    postfix_port_smtp: int = 0
+    postfix_usr: str = ""
+    postfix_pwd: str = ""
+    postfix_ssl: bool = False
+    twilio_sid: str = ""
+    twilio_token: str = ""
+    twilio_number: str = ""
+    domdetailer_app: str = ""
+    domdetailer_key: str = ""
+    pixabay_key: str = ""
+    user_agent: str = ""
+    proxy_str: str = ""
 
 
 class ConfigManager:
@@ -76,25 +76,9 @@ class ConfigManager:
         return file_config.is_file()
 
     @staticmethod
-    def set_default(config: Config) -> Config:
-        """Set Default Value for Config."""
-        for key, value in config.__dict__.items():
-            if isinstance(value, str):
-                setattr(config, key, "")
-            if isinstance(value, int):
-                setattr(config, key, 0)
-            if isinstance(value, float):
-                setattr(config, key, 0.0)
-            if isinstance(value, bool):
-                setattr(config, key, False)
-            if isinstance(value, list):
-                setattr(config, key, [])
-            if isinstance(value, set):
-                setattr(config, key, set())
-            if isinstance(value, dict):
-                setattr(config, key, {})
-
-        return config
+    def new() -> Config:
+        """Get new blank Config."""
+        return Config()
 
 
 class TestConfig:
@@ -109,7 +93,8 @@ class TestConfig:
         """Test ConfigManger."""
         app = ConfigManager()
         config = app.load(self.file_config)
-        blank = app.set_default(config)
+        assert isinstance(config, Config)
+        blank = app.new()
         app.save(config=blank, file_config=self.file_blank)
 
 
