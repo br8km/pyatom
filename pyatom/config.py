@@ -13,7 +13,7 @@ __all__ = (
 
 
 @dataclass
-class Config:
+class Config:  # pylint: disable=too-many-instance-attributes
     """Config."""
 
     key_2captcha: str = ""
@@ -36,6 +36,7 @@ class Config:
     pixabay_key: str = ""
     user_agent: str = ""
     proxy_str: str = ""
+    chrome_version: str = ""
 
 
 class ConfigManager:
@@ -66,6 +67,7 @@ class ConfigManager:
             pixabay_key=data.get("pixabay_key", ""),
             user_agent=data.get("user_agent", ""),
             proxy_str=data.get("proxy_str", ""),
+            chrome_version=data.get("chrome_version", ""),
         )
 
     @staticmethod
