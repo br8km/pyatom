@@ -89,7 +89,7 @@ class TestConfig:
     dir_app = Path(__file__).parent
 
     file_config = Path(dir_app.parent, "protect", "config.json")
-    file_blank = Path(dir_app.parent, "data", "config.json")
+    file_blank = Path(dir_app.parent, "data", "example.config.json")
 
     def test_config_manager(self) -> None:
         """Test ConfigManger."""
