@@ -32,7 +32,8 @@ class DownLoader:
         self.logger = logger
 
         self.session = requests.Session()
-        self.session.headers.update({"User-Agent": user_agent})
+        if user_agent:
+            self.session.headers.update({"User-Agent": user_agent})
         if proxy_str:
             self.session.proxies = {
                 "http": f"http://{proxy_str}",
