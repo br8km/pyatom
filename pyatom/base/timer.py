@@ -16,6 +16,7 @@ from arrow import Arrow
 __all__ = (
     "smart_delay",
     "utc_offset",
+    "timeit",
     "Timer",
 )
 
