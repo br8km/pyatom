@@ -5,7 +5,8 @@
 import random
 import time
 from datetime import datetime
-from typing import Optional
+from functools import wraps
+from typing import Optional, Any, Callable
 import pytz
 
 import arrow
@@ -35,6 +36,25 @@ def utc_offset(time_zone: str) -> int:
     if offset:
         return int(offset.total_seconds() / 3600)
     return 0
+
+
+def timeit(func: Callable) -> Any:
+    """Measure Timing of functions"""
+
+    @wraps(func)
+    def wrap(*args: Any, **kwargs: Any) -> Any:
+        """Wrap function."""
+        start = time.time()
+        result = func(*args, **kwargs)
+        end = time.time()
+        print(
+            "func:%r args:%r, kwargs:%r took: %2.8f sec"
+            % (func.__name__, args, kwargs, end - start)
+        )
+
+        return result
+
+    return wrap
 
 
 class Timer:
@@ -105,6 +125,20 @@ class TestTimer:
         time_zone = "Asia/hong_kong"
         offset = utc_offset(time_zone)
         assert offset == 8
+
+    @staticmethod
+    @timeit
+    def delay(name: str, pause: float) -> float:
+        """Delay for pause, return pause."""
+        print(f"anme = {name}")
+        time.sleep(pause)
+        return pause
+
+    def test_timeit(self) -> None:
+        """Test timeit."""
+        name = "Andy"
+        pause = 0.5
+        assert pause == self.delay(name, pause=pause)
 
     @staticmethod
     def test_timer() -> None:
