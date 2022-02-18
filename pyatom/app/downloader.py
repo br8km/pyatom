@@ -17,10 +17,10 @@ from pyatom.base.log import Logger, init_logger
 from pyatom.config import ConfigManager
 
 
-__all__ = ("DownLoader",)
+__all__ = ("Downloader",)
 
 
-class DownLoader:
+class Downloader:
     """
     Resumable Http Downloader for Large/Medium/Small File
     """
@@ -172,7 +172,7 @@ class TestDownloader:
 
     def test_downloader(self) -> None:
         """test downloader by direct or ranges downloading"""
-        app = DownLoader(
+        app = Downloader(
             user_agent=self.config.user_agent,
             proxy_str=self.config.proxy_str,
             logger=init_logger(name="test"),
