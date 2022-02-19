@@ -613,8 +613,8 @@ class Chrome:
         return int(port)
 
 
-class TestDownloader:
-    """Test Downloader."""
+class TestChrome:
+    """Test Chrome."""
 
     dir_app = Path(__file__).parent
     file_config = Path(dir_app.parent.parent, "protect", "config.json")
@@ -623,6 +623,22 @@ class TestDownloader:
     logger = init_logger(name="test")
     debugger = Debugger(path=dir_app, name="test")
 
+    def test_downloader(self) -> None:
+        """Test chrome downloader."""
+        print(self)
+
+    def test_launcher(self) -> None:
+        """Test chrome launcher."""
+        print(self)
+
+    def test_dev(self) -> None:
+        """Test chrome dev."""
+        print(self)
+
+    def test_chrome(self) -> None:
+        """Test chrome."""
+        print(self)
+
 
 if __name__ == "__main__":
-    TestDownloader()
+    TestChrome()
