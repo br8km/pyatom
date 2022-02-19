@@ -32,7 +32,6 @@ import requests
 import websocket
 import psutil
 
-
 from pyatom.base.io import dir_create, dir_del
 from pyatom.base.proxy import Proxy
 from pyatom.base.log import Logger, init_logger
@@ -66,11 +65,10 @@ class Device(ABC):
 
     did: str
 
+    headless: bool
     user_agent: str
     proxy_str: str
-
     ip_addr: str
-    incognito: bool
 
     os_cpu: str
     os_name: str
@@ -82,8 +80,7 @@ class Device(ABC):
     plugins: list[str]
 
     color_depth: int
-    screen_width: int
-    screen_height: int
+    viewport: tuple[int, int]
 
     session_storage: bool
     local_storage: bool
@@ -289,9 +286,9 @@ class Launcher:
 
         self.kwargs: dict[str, Any] = kwargs
 
-        self.auto_close = kwargs.get("auto_close", True)
         self.timeout = kwargs.get("timeout", 3)
         self.viewport = kwargs.get("viewport", Viewport(width=800, height=600))
+        self.auto_close = kwargs.get("auto_close", True)
         self.ignore_https_errors = kwargs.get("ignore_https_errors", False)
         self.max_connection_check = kwargs.get("max_connection_check", 15)
 
@@ -583,23 +580,42 @@ class Chrome:
 
     def __init__(
         self,
+        dir_chrome: Path,
         device: Device,
-        proxy_str: str,
-        user_data_dir: str,
-        headless: bool,
         logger: Logger,
         debugger: Optional[Debugger] = None,
     ):
         """Init Chrome."""
+        self.dir_chrome = dir_chrome
         self.device = device
-        self.proxy_str = proxy_str
-        self.user_data_dir = user_data_dir
-        self.headless = headless
         self.logger = logger
         self.debugger = debugger
 
+        self.data: dict = {"time_stamp": 0, "time_str": "", "req": {}, "res": {}}
+
+        self.user_data_dir = self.get_user_data_dir()
+
         self._launcher: Launcher
         self._dev: Dev
+
+    def check_install(self) -> bool:
+        """Check if chrome installed."""
+        print(self)
+        return True
+
+    def launch_exe(self) -> bool:
+        """Launch new chrome process."""
+        print(self)
+        return True
+
+    def connect_dev(self) -> bool:
+        """Connect to chrome devtools protocol."""
+        print(self)
+        return True
+
+    def get_user_data_dir(self) -> Path:
+        """Get user_data_dir as profile data dir."""
+        return self.dir_chrome / self.device.did
 
     @staticmethod
     def get_free_port() -> int:
@@ -611,6 +627,86 @@ class Chrome:
         del sock
         gc.collect()
         return int(port)
+
+    def header_set(self, key: str, value: str) -> bool:
+        """Set http header for chrome browser."""
+        print(self, key, value)
+        return True
+
+    def cookie_load(self) -> bool:
+        """Load cookie for chrome browser."""
+        print(self)
+        return True
+
+    def cookie_set(self, key: str, value: str) -> bool:
+        """Set cookie for chrome browser."""
+        print(self, key, value)
+        return True
+
+    def cookie_save(self) -> bool:
+        """Save cookie into local file."""
+        print(self)
+        return True
+
+    def req(self, method: str, url: str, **kwargs: Any) -> None:
+        """Issue http requests."""
+        print(self, method, url, kwargs)
+
+    def get(self, url: str, **kwargs: Any) -> None:
+        """Http GET."""
+        return self.req(method="GET", url=url, kwargs=kwargs)
+
+    def device_validate(self) -> bool:
+        """Validate device attributes."""
+        print(self)
+        return True
+
+    def device_spoof(self) -> bool:
+        """Spoof device attributes."""
+        print(self)
+        return True
+
+    def get_device_os_cpu(self) -> str:
+        """Get device os cpu string."""
+
+    def set_device_os_cpu(self) -> bool:
+        """Set device os cpu string."""
+
+    def get_device_os_name(self) -> str:
+        """Get device os name string."""
+
+    def get_device_os_version(self) -> str:
+        """Get device os version string."""
+
+    def get_device_concurrency(self) -> int:
+        """Get device hard concurrency."""
+
+    def get_device_fonts(self) -> list[str]:
+        """Get device fonts."""
+
+    def get_device_languages(self) -> list[str]:
+        """Get device languages."""
+
+    def get_device_plugins(self) -> list[str]:
+        """Get device plugins."""
+
+    def get_device_color_depth(self) -> int:
+        """Get device color depth."""
+
+    def get_device_viewport(self) -> tuple[int, int]:
+        """Get device viewport."""
+
+    def get_device_session_storage(self) -> bool:
+        """Get device session storage."""
+
+    def get_device_local_storage(self) -> bool:
+        """Get device local storage."""
+
+    def get_device_indexed_db(self) -> bool:
+        """Get device indexed_db."""
+
+    def get_device_memory(self) -> float:
+        """Get device memory."""
 
 
 class TestChrome:
