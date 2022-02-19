@@ -30,6 +30,7 @@ from typing import Optional, Any, Callable, Union
 
 import requests
 import websocket
+import psutil
 
 
 from pyatom.base.io import dir_create, dir_del
@@ -218,51 +219,51 @@ class Launcher:
     """Chrome Launcher."""
 
     default_args: list[str] = [
+        "--aggressive-cache-discard",
+        "--aggressive-tab-discard",
+        "--autoplay-policy=user-gesture-required",
         "--disable-background-networking",
         "--disable-background-timer-throttling",
         "--disable-breakpad",
         "--disable-browser-side-navigation",
         "--disable-client-side-phishing-detection",
+        "--disable-component-extensions-with-background-pages",
+        "--disable-component-update",
         "--disable-default-apps",
         "--disable-dev-shm-usage",
+        "--disable-device-discovery-notifications",
+        "--disable-domain-reliability",
         "--disable-extensions",
         "--disable-features=site-per-process",
         "--disable-hang-monitor",
-        "--disable-popup-blocking",
-        "--disable-prompt-on-repost",
-        "--disable-sync",
-        "--disable-translate",
-        "--metrics-recording-only",
-        "--safebrowsing-disable-auto-update",
-        "--enable-automation",
-        "--password-store=basic",
-        "--use-mock-keychain",
-        "--disable-client-side-phishing-detection",
-        "--disable-component-extensions-with-background-pages",
-        "--no-default-browser-check",
-        "--use-fake-device-for-media-stream",
-        "--single-process",
         "--disable-login-animations",
         "--disable-notifications",
+        "--disable-popup-blocking",
         "--disable-print-preview",
+        "--disable-prompt-on-repost",
+        "--disable-remote-fonts",
+        "--disable-sync",
         "--disable-system-font-check",
-        "--aggressive-cache-discard",
-        "--aggressive-tab-discard",
-        "--disable-domain-reliability",
-        "--disable-component-update",
-        "--disable-device-discovery-notifications",
+        "--disable-translate",
+        "--enable-automation",
+        "--metrics-recording-only",
+        "--no-default-browser-check",
         "--no-service-autorun",
+        "--no-zygote",
         "--password-store=basic",
+        "--safebrowsing-disable-auto-update",
+        "--single-process",
+        "--use-fake-device-for-media-stream",
+        "--use-mock-keychain",
     ]
 
     def __init__(
         self,
         chrome_exe: Path,
         port: int,
-        headless: bool,
         user_agent: str,
-        proxy_str: str,
         user_data_dir: Path,
+        proxy: Optional[Proxy],
         logger: Logger,
         debugger: Optional[Debugger],
         **kwargs: Any,
@@ -271,9 +272,8 @@ class Launcher:
         self.chrome_exe = chrome_exe
         self.port = port
 
-        self.headless = headless
         self.user_agent = user_agent
-        self.proxy: Optional[Proxy] = Proxy(proxy_str=proxy_str) if proxy_str else None
+        self.proxy = proxy
         self.user_data_dir = user_data_dir
         dir_create(self.user_data_dir)
 
@@ -283,6 +283,7 @@ class Launcher:
         self.host = "127.0.0.1"
         self.url = f"http://{self.host}:{port}"
 
+        self.ready = False
         self.proc: Popen
         self.loop = kwargs.get("loop", asyncio.get_event_loop())
 
@@ -334,11 +335,11 @@ class Launcher:
         chrome_args.append(start_url)
         return chrome_args
 
-    def cleanup_data_dir(self) -> bool:
+    def cleanup_data_dir(self, remain_root: bool = False) -> bool:
         """Cleanup temp user data dir."""
-        return dir_del(self.user_data_dir, remain_root=True)
+        return dir_del(self.user_data_dir, remain_root=remain_root)
 
-    def _start_chrome_process(self) -> None:
+    def _start_process(self) -> None:
         """Start chrome process."""
         stdout, stderr = None, None
         if self.debugger:
@@ -362,6 +363,7 @@ class Launcher:
         for _ in range(int(self.max_connection_check)):
             with requests.get(self.url, timeout=self.timeout) as response:
                 if response and response.ok:
+                    self.ready = True
                     return True
             time.sleep(0.5)
         return False
@@ -373,20 +375,26 @@ class Launcher:
 
     def start(self) -> bool:
         """Start process of chrome executable."""
-        self._start_chrome_process()
+        self._start_process()
         if not self.okay:
             self.logger.error("chrome start failed: %d", self.port)
             return False
         return True
 
-    def kill(self, retry: int = 3) -> None:
+    def kill(self, retry: int = 3, force: bool = True) -> None:
         """Kill process of chrome executable."""
+        self.ready = False
         for _ in range(retry):
             if self.proc:
                 self.proc.kill()
                 self.proc.__exit__(None, None, None)
+                if force:
+                    try:
+                        self.proc.wait(timeout=self.timeout)
+                    except (psutil.TimeoutExpired, psutil.NoSuchProcess, OSError):
+                        pass
 
-            time.sleep(0.5)
+                time.sleep(0.5)
 
 
 class Dev:
@@ -396,14 +404,13 @@ class Dev:
 
     def __init__(
         self,
-        host: str = "127.0.0.1",
         port: int = 9222,
         tab_index: int = 0,
         timeout: int = 1,
         auto_connect: bool = True,
     ):
         """Init."""
-        self.host = host
+        self.host = "127.0.0.1"
         self.port = port
         self.wsk: Optional[websocket.WebSocket] = None
         self.tabs: list[dict] = []
@@ -411,12 +418,13 @@ class Dev:
         if auto_connect:
             self.connect(tab_index=tab_index)
 
-    def get_tabs(self) -> None:
+    def get_tabs(self) -> bool:
         """Get live tabs."""
         response = requests.get(f"http://{self.host}:{self.port}/json")
         self.tabs = json.loads(response.text)
+        return len(self.tabs) > 0
 
-    def connect(self, tab_index: int = 0, update_tabs: bool = True) -> None:
+    def connect(self, tab_index: int = 0, update_tabs: bool = True) -> bool:
         """Connect."""
         if update_tabs or not self.tabs:
             self.get_tabs()
@@ -425,6 +433,7 @@ class Dev:
         self.close()
         self.wsk = websocket.create_connection(ws_url)
         self.wsk.settimeout(self.timeout)
+        return self.wsk is not None
 
     def connect_target(self, target_id: int) -> bool:
         """Connect target."""
@@ -440,10 +449,12 @@ class Dev:
             self.wsk.settimeout(self.timeout)
             return False
 
-    def close(self) -> None:
+    def close(self, retry: int = 3) -> None:
         """Close."""
-        if self.wsk:
-            self.wsk.close()
+        for _ in range(retry):
+            if self.wsk:
+                self.wsk.close()
+                time.sleep(0.5)
 
     # Blocking
     def wait_message(self, timeout: int = 0) -> dict:
