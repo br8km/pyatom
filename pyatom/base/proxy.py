@@ -9,10 +9,11 @@ import regex as re
 
 
 __all__ = (
+    "to_auth_header",
     "Proxy",
     "HttpProxy",
     "Socks5Proxy",
-    "to_auth_header",
+    "Socks4Proxy",
 )
 
 
@@ -39,14 +40,14 @@ class Proxy:
         - proxy_rdns: bool, reverse dns, default True
     """
 
-    __slots__ = ("proxy_str", "proxy_type", "proxy_rdns", "usr", "pwd", "addr", "port")
+    def __init__(self, proxy_str: str, scheme: str = "http", rdns: bool = True) -> None:
+        """Init Proxy."""
+        if scheme not in ("http", "socks5", "socks4"):
+            raise ValueError(f"proxy type not supported: `{scheme}`!")
 
-    def __init__(
-        self, proxy_str: str, proxy_type: int = 3, proxy_rdns: bool = True
-    ) -> None:
         self.proxy_str = proxy_str
-        self.proxy_type = proxy_type
-        self.proxy_rdns = proxy_rdns
+        self.scheme = scheme
+        self.rdns = rdns
 
         self.usr = ""
         self.pwd = ""
@@ -86,19 +87,34 @@ class Proxy:
             return self.parse4()
         return self.parse2()
 
+    @property
+    def url(self) -> str:
+        """Get proxy server uri string."""
+        return f"{self.scheme}://{self.addr}:{self.port}"
+
 
 class HttpProxy(Proxy):
-    """http proxy"""
+    """Http proxy"""
 
-    def __init__(self, proxy_str: str, proxy_type: int = 3) -> None:
-        super().__init__(proxy_str=proxy_str, proxy_type=proxy_type)
+    def __init__(self, proxy_str: str, scheme: str = "http") -> None:
+        """Init HttpProxy."""
+        super().__init__(proxy_str=proxy_str, scheme=scheme)
 
 
 class Socks5Proxy(Proxy):
-    """socks5 proxy"""
+    """Socks5 proxy"""
 
-    def __init__(self, proxy_str: str, proxy_type: int = 2) -> None:
-        super().__init__(proxy_str=proxy_str, proxy_type=proxy_type)
+    def __init__(self, proxy_str: str, scheme: str = "socks5") -> None:
+        """Init Socks5Proxy."""
+        super().__init__(proxy_str=proxy_str, scheme=scheme)
+
+
+class Socks4Proxy(Proxy):
+    """Socks4 proxy"""
+
+    def __init__(self, proxy_str: str, scheme: str = "socks4") -> None:
+        """Init Socks4Proxy."""
+        super().__init__(proxy_str=proxy_str, scheme=scheme)
 
 
 class TestProxy:
@@ -116,8 +132,7 @@ class TestProxy:
     def test_proxy() -> None:
         """Test general proxy string."""
         proxy_str = "hello_:World8@127.0.0.1:5000"
-        proxy_type = 1
-        proxy = Proxy(proxy_str=proxy_str, proxy_type=proxy_type)
+        proxy = Proxy(proxy_str=proxy_str)
         assert proxy.usr == "hello_"
         assert proxy.pwd == "World8"
         assert proxy.port == 5000
@@ -134,6 +149,13 @@ class TestProxy:
         """Test socks5 proxy string."""
         proxy_str = "hello_:World8@127.0.0.1:5000"
         proxy = Socks5Proxy(proxy_str=proxy_str)
+        assert proxy.port == 5000
+
+    @staticmethod
+    def test_socks4_proxy() -> None:
+        """Test socks5 proxy string."""
+        proxy_str = "hello_:World8@127.0.0.1:5000"
+        proxy = Socks4Proxy(proxy_str=proxy_str)
         assert proxy.port == 5000
 
 
