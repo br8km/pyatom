@@ -721,18 +721,22 @@ class TestChrome:
 
     def test_downloader(self) -> None:
         """Test chrome downloader."""
+        # test version select, save into config, etc.
         print(self)
 
     def test_launcher(self) -> None:
         """Test chrome launcher."""
+        # test launch, check and kill chrome process.
         print(self)
 
     def test_dev(self) -> None:
         """Test chrome dev."""
+        # test devtools to browser, page, tab operation.
         print(self)
 
     def test_chrome(self) -> None:
         """Test chrome."""
+        # test cookies, headers, requests, debugger save data, device fingerprints, etc.
         print(self)
 
 
