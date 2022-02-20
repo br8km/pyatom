@@ -389,7 +389,7 @@ class Launcher:
         """Cleanup temp user data dir."""
         return dir_del(self.dir_profile, remain_root=remain_root)
 
-    def _start_process(self) -> None:
+    def _start_process(self) -> bool:
         """Start chrome process."""
         stdout, stderr = None, None
         if self.debug:
@@ -397,6 +397,7 @@ class Launcher:
         self.proc = Popen(  # pylint: disable=R1732
             args=self.to_args(), shell=True, stdout=stdout, stderr=stderr
         )
+        return self.proc is not None
 
     @property
     def proc_ok(self) -> bool:
@@ -460,8 +461,9 @@ class Dev:
         retry: int = 30,
         auto_connect: bool = True,
     ):
-        """Init."""
+        """Init Chrome Devtools Protocol Wrapper."""
         self.host = "127.0.0.1"
+
         self.port = port
         self.logger = logger
         self.timeout = timeout
@@ -657,7 +659,6 @@ class Chrome:
 
         self._launcher: Launcher
         self._dev: Dev
-        self.device: Device
 
     @staticmethod
     def init_device(**kwargs: Any) -> Device:  # pylint: disable=too-many-locals
@@ -724,8 +725,10 @@ class Chrome:
         print(self, device_id)
         raise NotImplementedError
 
-    def save_device(self) -> bool:
+    def save_device(self, device: Device) -> bool:
         """Save device data."""
+        print(self, device)
+        raise NotImplementedError
 
     def ensure_install(self) -> bool:
         """Ensure chrome installed."""
@@ -744,15 +747,11 @@ class Chrome:
 
     def to_dir_profile(self, device_id: str) -> Path:
         """Get dir_profile."""
-        path = self.dir_chrome / "profile" / device_id
-        dir_create(path)
-        return path
+        return self.dir_chrome / "profile" / device_id
 
     def to_dir_install(self) -> Path:
         """Get dir_install."""
-        path = self.dir_chrome / "install"
-        dir_create(path)
-        return path
+        return self.dir_chrome / "install"
 
     @staticmethod
     def get_free_port() -> int:
