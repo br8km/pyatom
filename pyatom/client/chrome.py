@@ -106,7 +106,6 @@ class Mobile(Device):
     """Mobile."""
 
     flight_mode: bool
-    battery: float
 
     @property
     def is_android(self) -> bool:
@@ -659,28 +658,64 @@ class Chrome:
         self._dev: Dev
         self.device: Device
 
-    def init_device(self, **kwargs: Any) -> Device:
+    @staticmethod
+    def init_device(**kwargs: Any) -> Device:  # pylint: disable=too-many-locals
         """Init device."""
-        print(self, kwargs)
-        return Mobile(
-            did=str_rnd(),
-            headless=True,
-            user_agent="",
-            os_cpu="",
-            os_name="",
-            os_version="",
-            concurrency=0,
-            fonts=[],
-            languages=[],
-            plugins=[],
-            color_depth=24,
-            viewport=(800, 600),
-            session_storage=True,
-            local_storage=True,
-            indexed_db=True,
-            device_memory=1024 * 1024 * 1024,
-            flight_mode=False,
-            battery=0.85,
+        did = kwargs.get("did", str_rnd())
+        headless = kwargs.get("headless", True)
+        user_agent = kwargs.get("user_agent", "")
+        os_cpu = kwargs.get("os_cpu", "")
+        os_name = kwargs.get("os_name", "")
+        os_version = kwargs.get("os_version", "")
+        concurrency = kwargs.get("concurrency", 1)
+        fonts = kwargs.get("fonts", [])
+        languages = kwargs.get("languages", [])
+        plugins = kwargs.get("plugins", [])
+        color_depth = kwargs.get("color_depth", 24)
+        viewport = kwargs.get("viewport", (800, 600))
+        session_storage = kwargs.get("session_storage", True)
+        local_storage = kwargs.get("local_storage", True)
+        indexed_db = kwargs.get("indexed_db", True)
+        device_memory = kwargs.get("device_memory", 0)
+        flight_mode = kwargs.get("flight_mode", False)
+        is_mobile = kwargs.get("is_mobile", False)
+        if is_mobile:
+            return Mobile(
+                did=did,
+                headless=headless,
+                user_agent=user_agent,
+                os_cpu=os_cpu,
+                os_name=os_name,
+                os_version=os_version,
+                concurrency=concurrency,
+                fonts=fonts,
+                languages=languages,
+                plugins=plugins,
+                color_depth=color_depth,
+                viewport=viewport,
+                session_storage=session_storage,
+                local_storage=local_storage,
+                indexed_db=indexed_db,
+                device_memory=device_memory,
+                flight_mode=flight_mode,
+            )
+        return Desktop(
+            did=did,
+            headless=headless,
+            user_agent=user_agent,
+            os_cpu=os_cpu,
+            os_name=os_name,
+            os_version=os_version,
+            concurrency=concurrency,
+            fonts=fonts,
+            languages=languages,
+            plugins=plugins,
+            color_depth=color_depth,
+            viewport=viewport,
+            session_storage=session_storage,
+            local_storage=local_storage,
+            indexed_db=indexed_db,
+            device_memory=device_memory,
         )
 
     def load_device(self) -> bool:
