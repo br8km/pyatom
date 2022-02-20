@@ -718,14 +718,16 @@ class Chrome:
             device_memory=device_memory,
         )
 
-    def load_device(self) -> bool:
+    def load_device(self, device_id: str) -> Device:
         """Load device data."""
+        print(self, device_id)
+        raise NotImplementedError
 
     def save_device(self) -> bool:
         """Save device data."""
 
-    def check_install(self) -> bool:
-        """Check if chrome installed."""
+    def ensure_install(self) -> bool:
+        """Ensure chrome installed."""
         print(self)
         return True
 
