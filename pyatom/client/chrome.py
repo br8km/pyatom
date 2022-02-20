@@ -22,11 +22,13 @@ import time
 import gc
 import socket
 import platform
+import random
+import string
 from abc import ABC
 from pathlib import Path
 from subprocess import Popen, DEVNULL, STDOUT
 from dataclasses import dataclass
-from typing import Optional, Any, Callable, Union
+from typing import Optional, Any, Callable
 
 import requests
 import websocket
@@ -42,7 +44,6 @@ from pyatom.config import ConfigManager
 
 __all__ = (
     "Desktop",
-    "Tablet",
     "Mobile",
     "Downloader",
     "Launcher",
@@ -104,11 +105,6 @@ class Desktop(Device):
 
 
 @dataclass
-class Tablet(Device):
-    """Tablet."""
-
-
-@dataclass
 class Mobile(Device):
     """Mobile."""
 
@@ -127,18 +123,18 @@ class Downloader(AppDownloader):
         self,
         user_agent: str,
         proxy_str: str,
-        chrome_dir: Union[str, Path],
+        dir_chrome: Path,
         chrome_version: str,
         logger: Logger,
     ) -> None:
         """Init Chrome Downloader."""
         super().__init__(user_agent=user_agent, proxy_str=proxy_str, logger=logger)
 
-        if not dir_create(chrome_dir):
-            raise OSError(f"directory created failed: {chrome_dir}")
+        if not dir_create(dir_chrome):
+            raise OSError(f"directory created failed: {dir_chrome}")
 
-        self.chrome_dir = Path(chrome_dir)
-        self.chrome_version = chrome_version
+        self.dir_chrome = dir_chrome
+        self.chrome_version = chrome_version or self.latest_version()
 
         self.base = "https://storage.googleapis.com/chromium-browser-snapshots"
 
@@ -152,12 +148,11 @@ class Downloader(AppDownloader):
         is_x64 = bool(platform.architecture()[0] == "64bit")
         return os_name if not is_x64 else os_name + "_x64"
 
-    @staticmethod
-    def show_versions() -> list[dict]:
+    def show_versions(self) -> list[dict]:
         """Get Latest version of chromium."""
         os_name = platform.system().lower()
         url = "https://omahaproxy.appspot.com/all.json"
-        with requests.get(url, timeout=30) as response:
+        with self.session.get(url, timeout=30) as response:
             if response and response.status_code == 200:
                 data = response.json()
                 assert isinstance(data, list) and isinstance(data[0], dict)
@@ -189,27 +184,49 @@ class Downloader(AppDownloader):
         """Dwonload executable file."""
         url = self.remote_url(chrome_version)
         data = self.download_bytes(url=url)
-        return self.unzip(data, self.chrome_dir)
+        return self.unzip(data, self.dir_chrome)
 
-    def _patch(self, data: bytes) -> bytes:
-        """Patch for executable bytes."""
-        print(self, data)
-        return data
+    @staticmethod
+    def gen_random_cdc() -> bytes:
+        """Generate random cdc_asdjflasutopfhvcZLmcfl_ string."""
+        cdc = random.choices(string.ascii_lowercase, k=26)
+        cdc[-6:-4] = map(str.upper, cdc[-6:-4])
+        cdc[2] = cdc[0]
+        cdc[3] = "_"
+        return "".join(cdc).encode()
+
+    def patch_exe(self) -> bool:
+        """Patch for executable bytes, maybe for selenium chromedriver?"""
+        if self.exist():
+            with open(self.executable(), "rb") as file:
+                # do some replacement to file
+                print(file)
+                return True
+        return False
+
+    def is_patched(self) -> bool:
+        """Check if executable has been patched."""
+        if self.exist():
+            with open(self.executable(), "rb") as file:
+                # do some string check to file
+                print(file)
+                return True
+        return False
 
     def executable(self, chrome_version: str = "") -> Path:
         """Get file path for current env executable."""
         chrome_version = chrome_version or self.chrome_version
-        return self.chrome_dir / chrome_version / "chrome-linux" / "chrome"
+        return self.dir_chrome / chrome_version / "chrome-linux" / "chrome"
 
     def exist(self, chrome_version: str = "") -> bool:
         """Check exist of executable file."""
         return self.executable(chrome_version).is_file()
 
     def cleanup(self, chrome_version: str = "") -> bool:
-        """Cleanup chrome_dir."""
+        """Cleanup dir_chrome."""
         if chrome_version:
-            return dir_del(self.chrome_dir / chrome_version, remain_root=False)
-        return dir_del(self.chrome_dir, remain_root=True)
+            return dir_del(self.dir_chrome / chrome_version, remain_root=False)
+        return dir_del(self.dir_chrome, remain_root=True)
 
 
 class Launcher:
@@ -258,7 +275,7 @@ class Launcher:
         self,
         chrome_exe: Path,
         port: int,
-        user_agent: str,
+        user_agent: str,  # Maybe should use device here?
         user_data_dir: Path,
         proxy: Optional[Proxy],
         logger: Logger,
@@ -290,7 +307,7 @@ class Launcher:
         self.viewport = kwargs.get("viewport", Viewport(width=800, height=600))
         self.auto_close = kwargs.get("auto_close", True)
         self.ignore_https_errors = kwargs.get("ignore_https_errors", False)
-        self.max_connection_check = kwargs.get("max_connection_check", 15)
+        self.retry = kwargs.get("retry", 30)
 
     def to_args(self) -> list[str]:
         """Get chrome args to launch."""
@@ -348,16 +365,16 @@ class Launcher:
     @property
     def proc_ok(self) -> bool:
         """Check if process okay."""
-        for _ in range(int(self.max_connection_check)):
+        for _ in range(int(self.retry)):
             if self.proc and self.proc.poll() is None:
                 return True
             time.sleep(0.5)
-        return True
+        return False
 
     @property
     def connection_ok(self) -> bool:
         """Check if connection okay."""
-        for _ in range(int(self.max_connection_check)):
+        for _ in range(int(self.retry)):
             with requests.get(self.url, timeout=self.timeout) as response:
                 if response and response.ok:
                     self.ready = True
@@ -378,10 +395,10 @@ class Launcher:
             return False
         return True
 
-    def kill(self, retry: int = 3, force: bool = True) -> None:
+    def kill(self, force: bool = True) -> None:
         """Kill process of chrome executable."""
         self.ready = False
-        for _ in range(retry):
+        for _ in range(self.retry):
             if self.proc:
                 self.proc.kill()
                 self.proc.__exit__(None, None, None)
@@ -401,19 +418,24 @@ class Dev:
 
     def __init__(
         self,
-        port: int = 9222,
-        tab_index: int = 0,
+        port: int,
+        logger: Logger,
         timeout: int = 1,
+        retry: int = 30,
         auto_connect: bool = True,
     ):
         """Init."""
         self.host = "127.0.0.1"
         self.port = port
+        self.logger = logger
+        self.timeout = timeout
+        self.retry = retry
+
         self.wsk: Optional[websocket.WebSocket] = None
         self.tabs: list[dict] = []
-        self.timeout = timeout
+
         if auto_connect:
-            self.connect(tab_index=tab_index)
+            self.connect()
 
     def get_tabs(self) -> bool:
         """Get live tabs."""
@@ -440,14 +462,15 @@ class Dev:
             self.wsk = websocket.create_connection(ws_url)
             self.wsk.settimeout(self.timeout)
             return True
-        except json.JSONDecodeError:
+        except websocket.WebSocketException:
             ws_url = self.tabs[0]["webSocketDebuggerUrl"]
             self.wsk = websocket.create_connection(ws_url)
             self.wsk.settimeout(self.timeout)
             return False
 
-    def close(self, retry: int = 3) -> None:
+    def close(self, retry: int = 30) -> None:
         """Close."""
+        retry = retry or self.retry
         for _ in range(retry):
             if self.wsk:
                 self.wsk.close()
@@ -457,9 +480,10 @@ class Dev:
     def wait_message(self, timeout: int = 0) -> dict:
         """Wait for message."""
         if not self.wsk:
-            raise TypeError("self.wsk not init.")
+            self.logger.error("websocket not connected.")
+            return {}
 
-        timeout = timeout if timeout else self.timeout
+        timeout = timeout or self.timeout
         self.wsk.settimeout(timeout)
 
         try:
@@ -476,9 +500,10 @@ class Dev:
 
         """Wait for event."""
         if not self.wsk:
-            raise TypeError("self.wsk not init.")
+            self.logger.error("websocket not connected.")
+            return {}, []
 
-        timeout = timeout if timeout else self.timeout
+        timeout = timeout or self.timeout
         self.wsk.settimeout(timeout)
 
         start_time = time.time()
@@ -509,9 +534,10 @@ class Dev:
     def wait_result(self, result_id: int, timeout: int = 0) -> tuple[dict, list[dict]]:
         """Wait for result."""
         if not self.wsk:
-            raise TypeError("self.wsk not init.")
+            self.logger.error("websocket not connected.")
+            return {}, []
 
-        timeout = timeout if timeout else self.timeout
+        timeout = timeout or self.timeout
         self.wsk.settimeout(timeout)
 
         start_time = time.time()
@@ -538,7 +564,8 @@ class Dev:
     def pop_messages(self) -> list[dict]:
         """Pop messages."""
         if not self.wsk:
-            raise TypeError("self.wsk not init.")
+            self.logger.error("websocket not connected.")
+            return []
 
         messages = []
         self.wsk.settimeout(0)
@@ -558,7 +585,8 @@ class Dev:
         def generic_function(**args: Any) -> tuple[dict, list[dict]]:
             """General function for child attr."""
             if not self.wsk:
-                raise TypeError("self.wsk not init.")
+                self.logger.error("websocket not connected.")
+                return {}, []
 
             self.pop_messages()
             self.message_counter += 1
@@ -598,6 +626,12 @@ class Chrome:
         self._launcher: Launcher
         self._dev: Dev
 
+    def load_device(self) -> bool:
+        """Load device data."""
+
+    def save_device(self) -> bool:
+        """Save device data."""
+
     def check_install(self) -> bool:
         """Check if chrome installed."""
         print(self)
@@ -615,7 +649,9 @@ class Chrome:
 
     def get_user_data_dir(self) -> Path:
         """Get user_data_dir as profile data dir."""
-        return self.dir_chrome / self.device.did
+        path = self.dir_chrome / "profile" / self.device.did
+        dir_create(path)
+        return path
 
     @staticmethod
     def get_free_port() -> int:
