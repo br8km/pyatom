@@ -13,10 +13,11 @@
     - `https://peter.sh/experiments/chromium-command-line-switches/`
 
     Features:
+    ToDo:
+    - Device data
 
 """
 
-import asyncio
 import json
 import time
 import gc
@@ -37,12 +38,14 @@ import psutil
 from pyatom.base.io import dir_create, dir_del
 from pyatom.base.proxy import Proxy
 from pyatom.base.log import Logger, init_logger
-from pyatom.app.downloader import Downloader as AppDownloader
+from pyatom.base.structure import Address
 from pyatom.base.debug import Debugger
 from pyatom.config import ConfigManager
+from pyatom.app.downloader import Downloader as HttpDownloader
 
 
 __all__ = (
+    "Address",
     "Desktop",
     "Mobile",
     "Downloader",
@@ -53,14 +56,6 @@ __all__ = (
 
 
 @dataclass
-class Viewport:
-    """Viewport of chrome browser window size."""
-
-    width: int
-    height: int
-
-
-@dataclass
 class Device(ABC):
     """Abstract Device for Browser FingerPrint."""
 
@@ -68,8 +63,6 @@ class Device(ABC):
 
     headless: bool
     user_agent: str
-    proxy_str: str
-    ip_addr: str
 
     os_cpu: str
     os_name: str
@@ -89,19 +82,22 @@ class Device(ABC):
 
     device_memory: float
 
-    def timezone(self) -> str:
-        """Get time zone."""
-
-    def browser(self) -> str:
-        """Get browser name."""
-
-    def browser_version(self) -> str:
-        """Get browser version."""
-
 
 @dataclass
 class Desktop(Device):
     """Desktop."""
+
+    @property
+    def is_windows(self) -> bool:
+        """Is Windows."""
+        print(self)
+        return True
+
+    @property
+    def is_mac(self) -> bool:
+        """Is Mac."""
+        print(self)
+        return True
 
 
 @dataclass
@@ -111,8 +107,20 @@ class Mobile(Device):
     flight_mode: bool
     battery: float
 
+    @property
+    def is_android(self) -> bool:
+        """Is Android."""
+        print(self)
+        return True
 
-class Downloader(AppDownloader):
+    @property
+    def is_ios(self) -> bool:
+        """Is ios."""
+        print(self)
+        return True
+
+
+class Downloader(HttpDownloader):
     """Chrome Downloader.
 
     Support `Linux` Only as of 2022-02-18
@@ -130,12 +138,10 @@ class Downloader(AppDownloader):
         """Init Chrome Downloader."""
         super().__init__(user_agent=user_agent, proxy_str=proxy_str, logger=logger)
 
-        if not dir_create(dir_chrome):
-            raise OSError(f"directory created failed: {dir_chrome}")
+        self.dir_install = dir_chrome / "install"
+        dir_create(self.dir_install)
 
-        self.dir_chrome = dir_chrome
         self.chrome_version = chrome_version or self.latest_version()
-
         self.base = "https://storage.googleapis.com/chromium-browser-snapshots"
 
     @property
@@ -163,7 +169,6 @@ class Downloader(AppDownloader):
                             versions[0], dict
                         )
                         return versions
-
         return []
 
     def latest_version(self) -> str:
@@ -184,7 +189,7 @@ class Downloader(AppDownloader):
         """Dwonload executable file."""
         url = self.remote_url(chrome_version)
         data = self.download_bytes(url=url)
-        return self.unzip(data, self.dir_chrome)
+        return self.unzip(data, self.dir_install)
 
     @staticmethod
     def gen_random_cdc() -> bytes:
@@ -216,17 +221,38 @@ class Downloader(AppDownloader):
     def executable(self, chrome_version: str = "") -> Path:
         """Get file path for current env executable."""
         chrome_version = chrome_version or self.chrome_version
-        return self.dir_chrome / chrome_version / "chrome-linux" / "chrome"
+        return self.dir_install / chrome_version / "chrome-linux" / "chrome"
 
     def exist(self, chrome_version: str = "") -> bool:
         """Check exist of executable file."""
         return self.executable(chrome_version).is_file()
 
-    def cleanup(self, chrome_version: str = "") -> bool:
-        """Cleanup dir_chrome."""
+    def cleanup(self, chrome_version: str = "", all_others: bool = False) -> bool:
+        """Cleanup chrome install.
+
+        Options:
+        - chrome_version and all_other is False -> clean up this version;
+        - chrome_version and all_others is True -> clean up others except this version;
+        - no chrome_version and all_other is False -> clean up default version;
+        - no chrome_version and all_other is True -> clean up all version;
+
+        """
         if chrome_version:
-            return dir_del(self.dir_chrome / chrome_version, remain_root=False)
-        return dir_del(self.dir_chrome, remain_root=True)
+            if all_others:
+                for item in self.dir_install.iterdir():
+                    if item.is_dir() and chrome_version not in item.name:
+                        dir_del(item)
+                # how to check if delete all other chrome version install?
+                return all(
+                    chrome_version in item.name
+                    for item in self.dir_install.iterdir()
+                    if item.is_dir()
+                )
+            return dir_del(self.dir_install / chrome_version)
+
+        if all_others:
+            return dir_del(self.dir_install, remain_root=True)
+        return dir_del(self.dir_install / self.chrome_version)
 
 
 class Launcher:
@@ -275,36 +301,34 @@ class Launcher:
         self,
         chrome_exe: Path,
         port: int,
-        user_agent: str,  # Maybe should use device here?
-        user_data_dir: Path,
+        device: Device,
+        dir_profile: Path,
         proxy: Optional[Proxy],
         logger: Logger,
-        debugger: Optional[Debugger],
+        debug: bool = False,
         **kwargs: Any,
     ) -> None:
         """Init Chrome Launcher."""
         self.chrome_exe = chrome_exe
         self.port = port
 
-        self.user_agent = user_agent
+        self.device = device
         self.proxy = proxy
-        self.user_data_dir = user_data_dir
-        dir_create(self.user_data_dir)
+        self.dir_profile = dir_profile
+        dir_create(self.dir_profile)
 
         self.logger = logger
-        self.debugger = debugger
+        self.debug = debug
 
         self.host = "127.0.0.1"
         self.url = f"http://{self.host}:{port}"
 
         self.ready = False
         self.proc: Popen
-        self.loop = kwargs.get("loop", asyncio.get_event_loop())
 
         self.kwargs: dict[str, Any] = kwargs
 
         self.timeout = kwargs.get("timeout", 3)
-        self.viewport = kwargs.get("viewport", Viewport(width=800, height=600))
         self.auto_close = kwargs.get("auto_close", True)
         self.ignore_https_errors = kwargs.get("ignore_https_errors", False)
         self.retry = kwargs.get("retry", 30)
@@ -315,23 +339,19 @@ class Launcher:
             str(self.chrome_exe),
             f"--remote-debugging-address={self.host}",
             f"--remote-debugging-port={self.port}",
-            f"--user-data-dir={self.user_data_dir}",
+            f"--user-data-dir={self.dir_profile}",
         ]
 
         ignore_default_args = self.kwargs.get("ignore_default_args", False)
-        devtools = self.kwargs.get("devtools", False)
-        headless = self.kwargs.get("headless", not devtools)
         disable_image = self.kwargs.get("disable_image", False)
         extra_args = self.kwargs.get("extra_args", ["--no-first-run", "--no-sandbox"])
         incognito = self.kwargs.get("incognito", False)
         start_url = self.kwargs.get("start_url", "about:blank")
 
-        if devtools:
-            chrome_args.append("--auto-open-devtools-for-tabs")
-        if headless:
+        if self.device.headless:
             chrome_args.extend(("--headless", "--hide-scrollbars", "--mute-audio"))
-        if self.user_agent:
-            chrome_args.append(f"--user-agent={self.user_agent}")
+        if self.device.user_agent:
+            chrome_args.append(f"--user-agent={self.device.user_agent}")
         if self.proxy:
             chrome_args.append(f"--proxy-server={self.proxy.url}")
         if disable_image:
@@ -340,23 +360,22 @@ class Launcher:
             chrome_args.extend(extra_args)
         if incognito:
             chrome_args.append("--incognito")
-
         if not ignore_default_args:
             chrome_args.extend(self.default_args)
 
-        width, height = self.viewport.width, self.viewport.height
+        width, height = self.device.viewport
         chrome_args.append(f"--window-size={width},{height}")
         chrome_args.append(start_url)
         return chrome_args
 
     def cleanup_data_dir(self, remain_root: bool = False) -> bool:
         """Cleanup temp user data dir."""
-        return dir_del(self.user_data_dir, remain_root=remain_root)
+        return dir_del(self.dir_profile, remain_root=remain_root)
 
     def _start_process(self) -> None:
         """Start chrome process."""
         stdout, stderr = None, None
-        if self.debugger:
+        if self.debug:
             stdout, stderr = DEVNULL, STDOUT
         self.proc = Popen(  # pylint: disable=R1732
             args=self.to_args(), shell=True, stdout=stdout, stderr=stderr
