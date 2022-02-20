@@ -35,6 +35,7 @@ import requests
 import websocket
 import psutil
 
+from pyatom.base.chars import str_rnd
 from pyatom.base.io import dir_create, dir_del
 from pyatom.base.proxy import Proxy
 from pyatom.base.log import Logger, init_logger
@@ -131,15 +132,15 @@ class Downloader(HttpDownloader):
         self,
         user_agent: str,
         proxy_str: str,
-        dir_chrome: Path,
+        dir_install: Path,
         chrome_version: str,
         logger: Logger,
     ) -> None:
         """Init Chrome Downloader."""
         super().__init__(user_agent=user_agent, proxy_str=proxy_str, logger=logger)
 
-        self.dir_install = dir_chrome / "install"
-        dir_create(self.dir_install)
+        dir_create(dir_install)
+        self.dir_install = dir_install
 
         self.chrome_version = chrome_version or self.latest_version()
         self.base = "https://storage.googleapis.com/chromium-browser-snapshots"
@@ -192,7 +193,7 @@ class Downloader(HttpDownloader):
         return self.unzip(data, self.dir_install)
 
     @staticmethod
-    def gen_random_cdc() -> bytes:
+    def _gen_random_cdc() -> bytes:
         """Generate random cdc_asdjflasutopfhvcZLmcfl_ string."""
         cdc = random.choices(string.ascii_lowercase, k=26)
         cdc[-6:-4] = map(str.upper, cdc[-6:-4])
@@ -200,7 +201,7 @@ class Downloader(HttpDownloader):
         cdc[3] = "_"
         return "".join(cdc).encode()
 
-    def patch_exe(self) -> bool:
+    def _patch_exe(self) -> bool:
         """Patch for executable bytes, maybe for selenium chromedriver?"""
         if self.exist():
             with open(self.executable(), "rb") as file:
@@ -209,7 +210,7 @@ class Downloader(HttpDownloader):
                 return True
         return False
 
-    def is_patched(self) -> bool:
+    def _is_patched(self) -> bool:
         """Check if executable has been patched."""
         if self.exist():
             with open(self.executable(), "rb") as file:
@@ -227,32 +228,47 @@ class Downloader(HttpDownloader):
         """Check exist of executable file."""
         return self.executable(chrome_version).is_file()
 
+    def _cleanup_default(self) -> bool:
+        """Cleanup default chrome version."""
+        return dir_del(self.dir_install / self.chrome_version)
+
+    def _cleanup_all(self) -> bool:
+        """Cleanup all chrome version."""
+        return dir_del(self.dir_install, remain_root=True)
+
+    def _cleanup_only(self, chrome_version: str) -> bool:
+        """Clean only this chrome version."""
+        return dir_del(self.dir_install / chrome_version)
+
+    def _cleanup_others(self, chrome_version: str) -> bool:
+        """Cleanup others except this chrome version."""
+        for item in self.dir_install.iterdir():
+            if item.is_dir() and chrome_version not in item.name:
+                dir_del(item)
+        return all(
+            chrome_version in item.name
+            for item in self.dir_install.iterdir()
+            if item.is_dir()
+        )
+
     def cleanup(self, chrome_version: str = "", all_others: bool = False) -> bool:
         """Cleanup chrome install.
 
         Options:
-        - chrome_version and all_other is False -> clean up this version;
+        - chrome_version and all_others is False -> clean up this version;
         - chrome_version and all_others is True -> clean up others except this version;
-        - no chrome_version and all_other is False -> clean up default version;
-        - no chrome_version and all_other is True -> clean up all version;
+        - no chrome_version and all_others is False -> clean up default version;
+        - no chrome_version and all_others is True -> clean up all version;
 
         """
         if chrome_version:
             if all_others:
-                for item in self.dir_install.iterdir():
-                    if item.is_dir() and chrome_version not in item.name:
-                        dir_del(item)
-                # how to check if delete all other chrome version install?
-                return all(
-                    chrome_version in item.name
-                    for item in self.dir_install.iterdir()
-                    if item.is_dir()
-                )
-            return dir_del(self.dir_install / chrome_version)
+                return self._cleanup_others(chrome_version)
+            return self._cleanup_only(chrome_version)
 
         if all_others:
-            return dir_del(self.dir_install, remain_root=True)
-        return dir_del(self.dir_install / self.chrome_version)
+            return self._cleanup_all()
+        return self._cleanup_default()
 
 
 class Launcher:
@@ -314,8 +330,9 @@ class Launcher:
 
         self.device = device
         self.proxy = proxy
+
+        dir_create(dir_profile)
         self.dir_profile = dir_profile
-        dir_create(self.dir_profile)
 
         self.logger = logger
         self.debug = debug
@@ -628,22 +645,43 @@ class Chrome:
     def __init__(
         self,
         dir_chrome: Path,
-        device: Device,
         logger: Logger,
         debugger: Optional[Debugger] = None,
     ):
         """Init Chrome."""
         self.dir_chrome = dir_chrome
-        self.device = device
         self.logger = logger
         self.debugger = debugger
 
         self.data: dict = {"time_stamp": 0, "time_str": "", "req": {}, "res": {}}
 
-        self.user_data_dir = self.get_user_data_dir()
-
         self._launcher: Launcher
         self._dev: Dev
+        self.device: Device
+
+    def init_device(self, **kwargs: Any) -> Device:
+        """Init device."""
+        print(self, kwargs)
+        return Mobile(
+            did=str_rnd(),
+            headless=True,
+            user_agent="",
+            os_cpu="",
+            os_name="",
+            os_version="",
+            concurrency=0,
+            fonts=[],
+            languages=[],
+            plugins=[],
+            color_depth=24,
+            viewport=(800, 600),
+            session_storage=True,
+            local_storage=True,
+            indexed_db=True,
+            device_memory=1024 * 1024 * 1024,
+            flight_mode=False,
+            battery=0.85,
+        )
 
     def load_device(self) -> bool:
         """Load device data."""
@@ -666,9 +704,15 @@ class Chrome:
         print(self)
         return True
 
-    def get_user_data_dir(self) -> Path:
-        """Get user_data_dir as profile data dir."""
-        path = self.dir_chrome / "profile" / self.device.did
+    def to_dir_profile(self, device_id: str) -> Path:
+        """Get dir_profile."""
+        path = self.dir_chrome / "profile" / device_id
+        dir_create(path)
+        return path
+
+    def to_dir_install(self) -> Path:
+        """Get dir_install."""
+        path = self.dir_chrome / "install"
         dir_create(path)
         return path
 
@@ -721,46 +765,46 @@ class Chrome:
         print(self)
         return True
 
-    def get_device_os_cpu(self) -> str:
+    def _get_device_os_cpu(self) -> str:
         """Get device os cpu string."""
 
-    def set_device_os_cpu(self) -> bool:
+    def _set_device_os_cpu(self) -> bool:
         """Set device os cpu string."""
 
-    def get_device_os_name(self) -> str:
+    def _get_device_os_name(self) -> str:
         """Get device os name string."""
 
-    def get_device_os_version(self) -> str:
+    def _get_device_os_version(self) -> str:
         """Get device os version string."""
 
-    def get_device_concurrency(self) -> int:
+    def _get_device_concurrency(self) -> int:
         """Get device hard concurrency."""
 
-    def get_device_fonts(self) -> list[str]:
+    def _get_device_fonts(self) -> list[str]:
         """Get device fonts."""
 
-    def get_device_languages(self) -> list[str]:
+    def _get_device_languages(self) -> list[str]:
         """Get device languages."""
 
-    def get_device_plugins(self) -> list[str]:
+    def _get_device_plugins(self) -> list[str]:
         """Get device plugins."""
 
-    def get_device_color_depth(self) -> int:
+    def _get_device_color_depth(self) -> int:
         """Get device color depth."""
 
-    def get_device_viewport(self) -> tuple[int, int]:
+    def _get_device_viewport(self) -> tuple[int, int]:
         """Get device viewport."""
 
-    def get_device_session_storage(self) -> bool:
+    def _get_device_session_storage(self) -> bool:
         """Get device session storage."""
 
-    def get_device_local_storage(self) -> bool:
+    def _get_device_local_storage(self) -> bool:
         """Get device local storage."""
 
-    def get_device_indexed_db(self) -> bool:
+    def _get_device_indexed_db(self) -> bool:
         """Get device indexed_db."""
 
-    def get_device_memory(self) -> float:
+    def _get_device_memory(self) -> float:
         """Get device memory."""
 
 
