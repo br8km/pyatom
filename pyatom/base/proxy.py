@@ -45,16 +45,16 @@ class Proxy:
         return f"{self.scheme}://{self.addr}:{self.port}"
 
     @classmethod
-    def header_auth(cls, usr: str, pwd: str) -> str:
+    def header_auth(cls, usr: str, pwd: str) -> tuple[str, str]:
         """Generate proxy header value for `Proxy-Authorization`."""
         if usr and pwd:
             auth_str = f"{usr}:{pwd}"
             auth_bytes = unquote_to_bytes(auth_str)
             auth_str = encodebytes(auth_bytes).decode("utf-8")
             auth_str = "".join(auth_str.split())  # get rid of whitespace
-            return "Basic " + auth_str
+            return "Proxy-Authorization", "Basic " + auth_str
 
-        return ""
+        return "", ""
 
 
 def to_proxy(proxy_str: str, scheme: str = "http", rdns: bool = True) -> Proxy:
@@ -103,7 +103,8 @@ class TestProxy:
     def test_auth_headers() -> None:
         """Test proxy usr:pwd to auth headers."""
         usr, pwd = "hello", "world"
-        value = Proxy.header_auth(usr=usr, pwd=pwd)
+        key, value = Proxy.header_auth(usr=usr, pwd=pwd)
+        assert key and key.startswith("Proxy")
         assert value and value.startswith("Basic")
 
     @staticmethod
