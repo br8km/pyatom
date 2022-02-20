@@ -24,7 +24,7 @@ from tldextract import extract
 
 from pyatom.base.io import save_list_dict, load_list_dict
 from pyatom.base.log import Logger, init_logger
-from pyatom.base.proxy import HttpProxy, to_auth_header
+from pyatom.base.proxy import Proxy, to_proxy
 from pyatom.config import ConfigManager
 
 
@@ -53,8 +53,8 @@ class HTTPProxyTransport(Transport):
         Transport.__init__(self)
 
         self.user_agent = user_agent
-        self.proxy = HttpProxy(proxy_str=proxy_str)
-        key, value = to_auth_header(usr=self.proxy.usr, pwd=self.proxy.pwd)
+        self.proxy = to_proxy(proxy_str=proxy_str)
+        key, value = Proxy.header_auth(usr=self.proxy.usr, pwd=self.proxy.pwd)
         self.proxy_headers = {key: value}
         self.timeout = time_out
 
@@ -77,8 +77,8 @@ class HTTPSProxyTransport(SafeTransport):
         SafeTransport.__init__(self)
 
         self.user_agent = user_agent
-        self.proxy = HttpProxy(proxy_str=proxy_str)
-        key, value = to_auth_header(usr=self.proxy.usr, pwd=self.proxy.pwd)
+        self.proxy = to_proxy(proxy_str=proxy_str)
+        key, value = Proxy.header_auth(usr=self.proxy.usr, pwd=self.proxy.pwd)
         self.proxy_headers = {key: value}
         self.timeout = time_out
 
