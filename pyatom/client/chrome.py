@@ -37,7 +37,7 @@ import psutil
 
 from pyatom.base.chars import str_rnd
 from pyatom.base.io import dir_create, dir_del
-from pyatom.base.proxy import Proxy
+from pyatom.base.proxy import Proxy, to_proxy
 from pyatom.base.log import Logger, init_logger
 from pyatom.base.structure import Address
 from pyatom.base.debug import Debugger
@@ -46,13 +46,14 @@ from pyatom.app.downloader import Downloader as HttpDownloader
 
 
 __all__ = (
-    "Address",
     "Desktop",
     "Mobile",
     "Downloader",
     "Launcher",
     "Dev",
     "Chrome",
+    "Address",
+    "to_proxy",
 )
 
 
