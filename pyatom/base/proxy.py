@@ -6,6 +6,7 @@ from __future__ import annotations
 from base64 import encodebytes
 from urllib.parse import unquote_to_bytes
 from dataclasses import dataclass
+from ipaddress import ip_address
 
 import regex as re
 
@@ -49,16 +50,20 @@ class Proxy:
             found = re.compile(pattern_long, re.I).findall(url)
             if found:
                 usr, pwd, addr, port = found[0]
-                port = int(port)
-                return cls(
-                    addr=addr, port=port, usr=usr, pwd=pwd, scheme=scheme, rdns=rdns
-                )
+                if cls.valid(addr):
+                    port = int(port)
+                    return cls(
+                        addr=addr, port=port, usr=usr, pwd=pwd, scheme=scheme, rdns=rdns
+                    )
 
         found = re.compile(pattern_short, re.I).findall(url)
         if found:
             addr, port = found[0]
-            port = int(port)
-            return cls(addr=addr, port=port, usr=usr, pwd=pwd, scheme=scheme, rdns=rdns)
+            if cls.valid(addr):
+                port = int(port)
+                return cls(
+                    addr=addr, port=port, usr=usr, pwd=pwd, scheme=scheme, rdns=rdns
+                )
 
         raise ValueError(f"bad proxy format: {url}")
 
@@ -90,6 +95,15 @@ class Proxy:
             return "Proxy-Authorization", "Basic " + auth_str
 
         raise ValueError(f"proxy auth error @ usr=`{usr}`, pwd=`{pwd}`")
+
+    @classmethod
+    def valid(cls, addr: str) -> bool:
+        """validation for ip address"""
+        try:
+            ip_address(addr)
+            return True
+        except ValueError:
+            return False
 
 
 class TestProxy:
