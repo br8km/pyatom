@@ -7,6 +7,8 @@
 import os
 from pathlib import Path
 from typing import Union, Optional
+from io import BytesIO
+from zipfile import ZipFile
 
 import requests
 from requests import Response
@@ -25,19 +27,19 @@ class Downloader:
     Resumable Http Downloader for Large/Medium/Small File
     """
 
-    def __init__(self, user_agent: str, proxy_str: str, logger: Logger) -> None:
+    def __init__(self, user_agent: str, proxy_url: str, logger: Logger) -> None:
         """Init downloader."""
         self.user_agent = user_agent
-        self.proxy_str = proxy_str
+        self.proxy_url = proxy_url
         self.logger = logger
 
         self.session = requests.Session()
         if user_agent:
             self.session.headers.update({"User-Agent": user_agent})
-        if proxy_str:
+        if proxy_url:
             self.session.proxies = {
-                "http": f"http://{proxy_str}",
-                "https": f"http://{proxy_str}",
+                "http": proxy_url,
+                "https": proxy_url,
             }
 
     def _head(self, file_url: str) -> Optional[Response]:
@@ -54,7 +56,10 @@ class Downloader:
     @staticmethod
     def _file_size(response: Response) -> int:
         """Parse file size from response headers"""
-        return int(response.headers.get("Content-Length", 0))
+        try:
+            return int(response.headers["content-length"])
+        except (KeyError, ValueError, AttributeError):
+            return 0
 
     def download_direct(
         self, file_url: str, file_out: Union[Path, str], chunk_size: int = 1024
@@ -63,12 +68,14 @@ class Downloader:
         with self.session.get(file_url, stream=True) as response:
             response.raise_for_status()
             total_size = self._file_size(response)
-            progress_bar = tqdm(total=total_size, unit="iB", unit_scale=True)
             with open(file_out, "wb") as file:
+                progress_bar = tqdm(total=total_size, unit="iB", unit_scale=True)
                 for chunk in response.iter_content(chunk_size=chunk_size):
                     file.write(chunk)
                     file.flush()
                     progress_bar.update(len(chunk))
+                    progress_bar.refresh()
+                progress_bar.close()
 
                 return os.stat(file_out).st_size == total_size
 
@@ -118,9 +125,8 @@ class Downloader:
                 self.logger.error("file size error!")
                 return False
 
-        progress_bar = tqdm(total=total_size, unit="iB", unit_scale=True)
-
         with open(file_out, "ab+") as file:
+            progress_bar = tqdm(total=total_size, unit="iB", unit_scale=True)
             while True:
                 file_size = os.stat(file_out).st_size
                 if file_size >= total_size:
@@ -137,8 +143,11 @@ class Downloader:
                         file.write(chunk)
                         file.flush()
                         progress_bar.update(len(chunk))
+                        progress_bar.refresh()
 
                 start_pos = end_pos
+
+            progress_bar.close()
 
         return os.stat(file_out).st_size == total_size
 
@@ -162,6 +171,31 @@ class Downloader:
             )
         return self.download_direct(file_url=file_url, file_out=file_out)
 
+    def download_bytes(self, url: str, chunk_size: int = 1024) -> BytesIO:
+        """Download bytes data."""
+        with self.session.get(url, stream=True) as response:
+            response.raise_for_status()
+            total_size = self._file_size(response)
+            progress_bar = tqdm(total=total_size, unit="iB", unit_scale=True)
+            _data = BytesIO()
+            for chunk in response.iter_content(chunk_size=chunk_size):
+                _data.write(chunk)
+                progress_bar.update(len(chunk))
+                progress_bar.refresh()
+            progress_bar.close()
+
+            return _data
+
+    @staticmethod
+    def unzip(data: BytesIO, dir_to: Path) -> bool:
+        """Unzip zipped bytes data into file path."""
+        if not dir_to.exists():
+            dir_to.mkdir(parents=True)
+        with ZipFile(data) as file:
+            file.extractall(str(dir_to.absolute()))
+
+        return True
+
 
 class TestDownloader:
     """Test Downloader."""
@@ -174,7 +208,7 @@ class TestDownloader:
         """test downloader by direct or ranges downloading"""
         app = Downloader(
             user_agent=self.config.user_agent,
-            proxy_str=self.config.proxy_str,
+            proxy_url=self.config.proxy_url,
             logger=init_logger(name="test"),
         )
 

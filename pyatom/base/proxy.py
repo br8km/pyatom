@@ -24,6 +24,7 @@ class Proxy:
     pwd: str = ""
 
     scheme: str = "http"
+    type: int = 3
     rdns: bool = True
 
     @classmethod
@@ -36,9 +37,17 @@ class Proxy:
         """
         scheme = url.split("://")[0] if "://" in url else "http"
         scheme = scheme.lower()
-        if scheme not in ("http", "socks5", "socks4"):
+
+        data_type = {
+            "http": 3,
+            "socks5": 2,
+            "socks4": 1,
+        }
+
+        if scheme not in data_type.keys():
             raise ValueError(f"proxy type not supported: `{scheme}`!")
 
+        proxy_type = data_type.get(scheme, 3)
         addr, port, usr, pwd = "", 80, "", ""
 
         # long proxy format: usr:pwd@addr:port
@@ -53,7 +62,13 @@ class Proxy:
                 if cls.valid(addr):
                     port = int(port)
                     return cls(
-                        addr=addr, port=port, usr=usr, pwd=pwd, scheme=scheme, rdns=rdns
+                        addr=addr,
+                        port=port,
+                        usr=usr,
+                        pwd=pwd,
+                        scheme=scheme,
+                        rdns=rdns,
+                        type=proxy_type,
                     )
 
         found = re.compile(pattern_short, re.I).findall(url)
@@ -62,7 +77,13 @@ class Proxy:
             if cls.valid(addr):
                 port = int(port)
                 return cls(
-                    addr=addr, port=port, usr=usr, pwd=pwd, scheme=scheme, rdns=rdns
+                    addr=addr,
+                    port=port,
+                    usr=usr,
+                    pwd=pwd,
+                    scheme=scheme,
+                    rdns=rdns,
+                    type=proxy_type,
                 )
 
         raise ValueError(f"bad proxy format: {url}")
@@ -115,13 +136,14 @@ class TestProxy:
     """TestCase for Proxy."""
 
     @staticmethod
-    def test_proxy() -> None:
-        """Test general proxy string."""
+    def test_http_proxy() -> None:
+        """Test http proxy parsing."""
         url = "http://hello_:World8@127.0.0.1:5000"
         proxy = Proxy.load(url=url)
         assert isinstance(proxy, Proxy)
         assert proxy.rdns is True
         assert proxy.scheme == "http"
+        assert proxy.type == 3
         assert proxy.usr == "hello_"
         assert proxy.pwd == "World8"
         assert proxy.addr == "127.0.0.1"
@@ -139,6 +161,22 @@ class TestProxy:
         key, value = proxy.auth
         assert key.startswith("Proxy")
         assert value.startswith("Basic")
+
+    @staticmethod
+    def test_socks5_proxy() -> None:
+        """Test socks5 proxy parsing."""
+        url = "socks5://hello_:World8@127.0.0.1:5000"
+        proxy = Proxy.load(url=url)
+        assert proxy.scheme == "socks5"
+        assert proxy.type == 2
+
+    @staticmethod
+    def test_socks4_proxy() -> None:
+        """Test socks4 proxy parsing."""
+        url = "socks4://hello_:World8@127.0.0.1:5000"
+        proxy = Proxy.load(url=url)
+        assert proxy.scheme == "socks4"
+        assert proxy.type == 1
 
 
 if __name__ == "__main__":

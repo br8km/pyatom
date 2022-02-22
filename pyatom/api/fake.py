@@ -23,18 +23,18 @@ class FakeFace:
     FakeFace for profile to posting
     """
 
-    def __init__(self, user_agent: str, proxy_str: str) -> None:
+    def __init__(self, user_agent: str, proxy_url: str) -> None:
         """Init FakeFace."""
         self.user_agent = user_agent
-        self.proxy_str = proxy_str
+        self.proxy_url = proxy_url
 
         self.session = requests.Session()
         self.session.headers.update({"User-Agent": user_agent})
 
-        if proxy_str:
+        if proxy_url:
             self.session.proxies = {
-                "http": f"http://{proxy_str}",
-                "https": f"http://{proxy_str}",
+                "http": proxy_url,
+                "https": proxy_url,
             }
 
     def http_get(self, url: str) -> dict:
@@ -79,7 +79,7 @@ class TestFake:
     def test_fakeface(self) -> None:
         """Test FakeFace."""
         app = FakeFace(
-            user_agent=self.config.user_agent, proxy_str=self.config.proxy_str
+            user_agent=self.config.user_agent, proxy_url=self.config.proxy_url
         )
         image_url = app.generate()
         assert image_url != ""

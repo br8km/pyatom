@@ -27,7 +27,7 @@ class Http:
 
     __slots__ = (
         "user_agent",
-        "proxy_str",
+        "proxy_url",
         "time_out",
         "logger",
         "debugger",
@@ -38,7 +38,7 @@ class Http:
     def __init__(
         self,
         user_agent: str,
-        proxy_str: str,
+        proxy_url: str,
         logger: Logger,
         time_out: int = 30,
         debugger: Optional[Debugger] = None,
@@ -46,7 +46,7 @@ class Http:
         """Init Http Client."""
 
         self.user_agent = user_agent
-        self.proxy_str = proxy_str
+        self.proxy_url = proxy_url
         self.time_out = time_out
         self.logger = logger
         self.debugger = debugger
@@ -57,9 +57,11 @@ class Http:
             headers = {"User-Agent": user_agent}
             self.session.headers.update(headers)
 
-        if proxy_str:
-            proxy_dict = {"http": f"http://{proxy_str}", "https": f"http://{proxy_str}"}
-            self.session.proxies = proxy_dict
+        if proxy_url:
+            self.session.proxies = {
+                "http": proxy_url,
+                "https": proxy_url,
+            }
 
         self.data: dict = {"time_stamp": 0, "time_str": "", "req": {}, "res": {}}
 
@@ -269,7 +271,7 @@ class TestHttp:
         """Get Http Client."""
         return Http(
             user_agent=self.config.user_agent,
-            proxy_str=self.config.proxy_str,
+            proxy_url=self.config.proxy_url,
             logger=self.logger,
             debugger=self.debugger,
         )

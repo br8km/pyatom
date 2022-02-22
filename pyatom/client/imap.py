@@ -195,8 +195,8 @@ class ImapClient:
                     proxy_port=self.proxy.port,
                     proxy_username=self.proxy.usr,
                     proxy_password=self.proxy.pwd,
-                    proxy_type=self.proxy.proxy_type,
-                    proxy_rdns=self.proxy.proxy_rdns,
+                    proxy_type=self.proxy.type,
+                    proxy_rdns=self.proxy.rdns,
                 )
             else:
                 self.conn = SocksIMAP4(
@@ -206,8 +206,8 @@ class ImapClient:
                     proxy_port=self.proxy.port,
                     proxy_username=self.proxy.usr,
                     proxy_password=self.proxy.pwd,
-                    proxy_type=self.proxy.proxy_type,
-                    proxy_rdns=self.proxy.proxy_rdns,
+                    proxy_type=self.proxy.type,
+                    proxy_rdns=self.proxy.rdns,
                 )
         else:
             if self.ssl:
@@ -447,7 +447,7 @@ class TestImap:
             port=self.config.postfix_port_imap,
             usr=self.config.postfix_usr,
             pwd=self.config.postfix_pwd,
-            proxy=Proxy(proxy_str=self.config.proxy_str),
+            proxy=Proxy.load(url=self.config.proxy_url),
         )
 
     def test_postfiximap(self) -> None:

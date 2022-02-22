@@ -31,7 +31,7 @@ class SmartProxy:
         "check_url",
         "data",
         "addr",
-        "proxy_str",
+        "url",
         "delay",
         "stop",
         "session",
@@ -53,7 +53,7 @@ class SmartProxy:
             "iphub": {},
         }
         self.addr = ""
-        self.proxy_str = ""
+        self.url = ""
         self.delay = 30
         self.stop = False
 
@@ -62,18 +62,18 @@ class SmartProxy:
         headers = {"User-Agent": user_agent}
         self.session.headers.update(headers)
 
-    def update(self, proxy_str: str) -> None:
+    def update(self, proxy_url: str) -> None:
         """Update requests.session with new proxy string."""
-        self.proxy_str = proxy_str
+        self.url = proxy_url
         self.session.proxies = {
-            "http": f"http://{proxy_str}",
-            "https": f"http://{proxy_str}",
+            "http": proxy_url,
+            "https": proxy_url,
         }
 
     def rnd(self, country: str = "US") -> None:
         """Generate random proxy string for specific country."""
-        proxy_str = f"user-{self.usr}-country-{country}:{self.pwd}@{self.api}"
-        self.update(proxy_str)
+        proxy_url = f"http://user-{self.usr}-country-{country}:{self.pwd}@{self.api}"
+        self.update(proxy_url)
 
     def sticky(self, country: str = "US", city: str = "") -> None:
         """Generate sticky proxy string for specific country and city."""
@@ -81,8 +81,8 @@ class SmartProxy:
         prefix = f"user-{self.usr}-country-{country}"
         if city:
             prefix = f"{prefix}-city-{city}"
-        proxy_str = f"{prefix}-session-{session_id}:{self.pwd}@{self.api}"
-        self.update(proxy_str)
+        proxy_url = f"http://{prefix}-session-{session_id}:{self.pwd}@{self.api}"
+        self.update(proxy_url)
 
     def http_get(self, url: str, timeout: int = 30) -> Optional[Response]:
         """HTTP GET request"""
@@ -218,7 +218,7 @@ class SmartProxy:
             self.logger.info(f"{block} - {check_blocks}")
             if block in check_blocks:
                 self.logger.info(f"<GOOD>[block={block}]{self.addr}")
-                return self.proxy_str
+                return self.url
 
             self.logger.info(f"<BAD>[block={block}]{self.addr}")
         return ""

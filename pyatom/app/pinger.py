@@ -24,7 +24,7 @@ from tldextract import extract
 
 from pyatom.base.io import save_list_dict, load_list_dict
 from pyatom.base.log import Logger, init_logger
-from pyatom.base.proxy import Proxy, to_proxy
+from pyatom.base.proxy import Proxy
 from pyatom.config import ConfigManager
 
 
@@ -48,13 +48,13 @@ class Service:
 class HTTPProxyTransport(Transport):
     """HTTP Proxy Transport."""
 
-    def __init__(self, user_agent: str, proxy_str: str, time_out: int):
+    def __init__(self, user_agent: str, proxy_url: str, time_out: int):
         """Init."""
         Transport.__init__(self)
 
         self.user_agent = user_agent
-        self.proxy = to_proxy(proxy_str=proxy_str)
-        key, value = Proxy.header_auth(usr=self.proxy.usr, pwd=self.proxy.pwd)
+        self.proxy = Proxy.load(url=proxy_url)
+        key, value = self.proxy.auth
         self.proxy_headers = {key: value}
         self.timeout = time_out
 
@@ -72,13 +72,13 @@ class HTTPProxyTransport(Transport):
 class HTTPSProxyTransport(SafeTransport):
     """HTTPS Proxy Transport."""
 
-    def __init__(self, user_agent: str, proxy_str: str, time_out: int):
+    def __init__(self, user_agent: str, proxy_url: str, time_out: int):
         """Init."""
         SafeTransport.__init__(self)
 
         self.user_agent = user_agent
-        self.proxy = to_proxy(proxy_str=proxy_str)
-        key, value = Proxy.header_auth(usr=self.proxy.usr, pwd=self.proxy.pwd)
+        self.proxy = Proxy.load(url=proxy_url)
+        key, value = self.proxy.auth
         self.proxy_headers = {key: value}
         self.timeout = time_out
 
@@ -108,7 +108,7 @@ class BasePinger:
 
     @property
     def rnd_px(self) -> str:
-        """Get random proxy_str string."""
+        """Get random proxy_url string."""
         return random.choice(self.list_px)
 
     @staticmethod
@@ -184,7 +184,7 @@ class XMLPinger(BasePinger):
                 service_url,
                 transport=HTTPSProxyTransport(
                     user_agent=self.rnd_ua,
-                    proxy_str=self.rnd_px,
+                    proxy_url=self.rnd_px,
                     time_out=self.time_out,
                 ),
             )
@@ -192,7 +192,7 @@ class XMLPinger(BasePinger):
             service_url,
             transport=HTTPProxyTransport(
                 user_agent=self.rnd_ua,
-                proxy_str=self.rnd_px,
+                proxy_url=self.rnd_px,
                 time_out=self.time_out,
             ),
         )
@@ -339,10 +339,10 @@ class TestPinger:
     def test_base_pinger(self) -> None:
         """Test BasePinger."""
         pinger = BasePinger(
-            list_ua=[self.config.user_agent], list_px=[self.config.proxy_str]
+            list_ua=[self.config.user_agent], list_px=[self.config.proxy_url]
         )
         assert self.config.user_agent == pinger.rnd_ua
-        assert self.config.proxy_str == pinger.rnd_px
+        assert self.config.proxy_url == pinger.rnd_px
 
         assert pinger.normalize("ftp://hello.com") == ""
         assert pinger.normalize("http://bing.com/") == "http://bing.com"
@@ -359,7 +359,7 @@ class TestPinger:
         """Test XMLPinger."""
         pinger = XMLPinger(
             list_ua=[self.config.user_agent],
-            list_px=[self.config.proxy_str],
+            list_px=[self.config.proxy_url],
             logger=self.logger,
         )
         list_service = [pinger.to_service(url) for url in self.list_service_url]
