@@ -4,6 +4,7 @@
 
 import random
 from dataclasses import dataclass, asdict
+from typing import Union
 
 import orjson
 
@@ -16,13 +17,12 @@ __all__ = (
 )
 
 
-def print2(data: dict, extra_line: bool = True) -> None:
+def print2(data: Union[list, dict], extra_line: bool = True) -> None:
     """Pretty print dictionary with indent and extra line"""
-    if type(data) in (dict, list):
-        opt = orjson.OPT_INDENT_2
-        if extra_line:
-            opt = opt | orjson.OPT_APPEND_NEWLINE
-        print(orjson.dumps(data, option=opt).decode())
+    opt = orjson.OPT_INDENT_2
+    if extra_line:
+        opt = opt | orjson.OPT_APPEND_NEWLINE
+    print(orjson.dumps(data, option=opt).decode())
 
 
 def split_list_int(list_obj: list[int], number: int) -> list[list[int]]:
