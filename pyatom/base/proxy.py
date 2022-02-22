@@ -115,14 +115,6 @@ class TestProxy:
     """TestCase for Proxy."""
 
     @staticmethod
-    def test_proxy_header_auth() -> None:
-        """Test proxy usr:pwd to auth headers."""
-        usr, pwd = "hello", "world"
-        key, value = Proxy.header_auth(usr=usr, pwd=pwd)
-        assert key and key.startswith("Proxy")
-        assert value and value.startswith("Basic")
-
-    @staticmethod
     def test_proxy() -> None:
         """Test general proxy string."""
         url = "http://hello_:World8@127.0.0.1:5000"
@@ -138,6 +130,12 @@ class TestProxy:
         assert proxy.server == "http://127.0.0.1:5000"
         assert isinstance(proxy.data, dict)
         assert list(proxy.data.keys()) == ["http", "https"]
+
+        usr, pwd = "hello", "world"
+        key, value = Proxy.header_auth(usr=usr, pwd=pwd)
+        assert key and key.startswith("Proxy")
+        assert value and value.startswith("Basic")
+
         key, value = proxy.auth
         assert key.startswith("Proxy")
         assert value.startswith("Basic")
