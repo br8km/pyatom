@@ -35,7 +35,7 @@ class Config:  # pylint: disable=too-many-instance-attributes
     domdetailer_key: str = ""
     pixabay_key: str = ""
     user_agent: str = ""
-    proxy_str: str = ""
+    proxy_url: str = ""
     chrome_version: str = ""
 
 
@@ -66,7 +66,7 @@ class ConfigManager:
             domdetailer_key=data.get("domdetailer_key", ""),
             pixabay_key=data.get("pixabay_key", ""),
             user_agent=data.get("user_agent", ""),
-            proxy_str=data.get("proxy_str", ""),
+            proxy_url=data.get("proxy_url", ""),
             chrome_version=data.get("chrome_version", ""),
         )
 
