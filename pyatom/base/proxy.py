@@ -96,6 +96,11 @@ class Proxy:
 
         raise ValueError(f"proxy auth error @ usr=`{usr}`, pwd=`{pwd}`")
 
+    @property
+    def auth(self) -> tuple[str, str]:
+        """Get header auth string tuple."""
+        return self.header_auth(usr=self.usr, pwd=self.pwd)
+
     @classmethod
     def valid(cls, addr: str) -> bool:
         """validation for ip address"""
@@ -133,6 +138,9 @@ class TestProxy:
         assert proxy.server == "http://127.0.0.1:5000"
         assert isinstance(proxy.data, dict)
         assert list(proxy.data.keys()) == ["http", "https"]
+        key, value = proxy.auth
+        assert key.startswith("Proxy")
+        assert value.startswith("Basic")
 
 
 if __name__ == "__main__":
