@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 
 """
-    Object-Relational Mapping for database
+    Database Object-Relational Mapping
 """
 
 # mypy: ignore-errors
@@ -19,13 +19,13 @@ from sqlalchemy.orm import scoped_session, sessionmaker
 from sqlalchemy import Column, Integer, String, Boolean
 
 
-__all__ = ("ORM",)
+__all__ = ("Database",)
 
 
 Base = declarative_base()
 
 
-class ORM:
+class Database:
     """ORM derive from sqlalchemy."""
 
     def __init__(self, engine: Engine, future: bool = True) -> None:
@@ -285,7 +285,7 @@ class ORM:
         return not extra and not lack
 
 
-class Sqlite(ORM):
+class Sqlite(Database):
     """Sqlite ORM."""
 
     def __init__(self, db_file: Path, echo: bool = False, future: bool = True) -> None:
@@ -297,7 +297,7 @@ class Sqlite(ORM):
         # self.create_tables()
 
 
-class PostgreSQL(ORM):
+class PostgreSQL(Database):
     """PostgreSQL ORM."""
 
     def __init__(
@@ -318,7 +318,7 @@ class PostgreSQL(ORM):
         # self.create_tables()
 
 
-class MySQL(ORM):
+class MySQL(Database):
     """MySQL ORM."""
 
     def __init__(
@@ -356,8 +356,8 @@ class TableDomain(Base):
         return f"<TableDomain(id={self.id}, country='{self.country}', netloc='{self.netloc}', root={self.root})>"
 
 
-class TestORM:
-    """Test ORM Operation."""
+class TestDatabase:
+    """Test Database ORM Operation."""
 
     dir_root = Path(__file__).parent
 
@@ -389,4 +389,4 @@ class TestORM:
 
 
 if __name__ == "__main__":
-    TestORM()
+    TestDatabase()
