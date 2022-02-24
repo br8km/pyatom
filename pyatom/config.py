@@ -3,7 +3,7 @@
 from pathlib import Path
 from dataclasses import dataclass, asdict
 
-from pyatom.base.io import load_dict, save_dict
+from pyatom.base.io import IO
 
 
 __all__ = (
@@ -45,7 +45,7 @@ class ConfigManager:
     @staticmethod
     def load(file_config: Path) -> Config:
         """Load config from local file."""
-        data = load_dict(file_config)
+        data = IO.load_dict(file_config)
         return Config(
             key_2captcha=data.get("key_2captcha", ""),
             smart_proxy_usr=data.get("smart_proxy_usr", ""),
@@ -74,7 +74,7 @@ class ConfigManager:
     def save(config: Config, file_config: Path) -> bool:
         """Save config into local file."""
         data = asdict(config)
-        save_dict(file_name=file_config, file_data=data)
+        IO.save_dict(file_name=file_config, file_data=data)
         return file_config.is_file()
 
     @staticmethod
