@@ -10,7 +10,7 @@ import orjson
 import requests
 from requests import Response
 
-from pyatom.base.io import load_dict, save_dict, file_del
+from pyatom.base.io import IO
 from pyatom.base.debug import Debugger
 from pyatom.base.log import Logger, init_logger
 from pyatom.config import ConfigManager
@@ -130,12 +130,12 @@ class Http:
     def cookie_load(self, file_cookie: Path) -> None:
         """load session cookie from local file"""
         if file_cookie.is_file():
-            cookie = load_dict(file_cookie)
+            cookie = IO.load_dict(file_cookie)
             self.session.cookies.update(cookie)
 
     def cookie_save(self, file_cookie: Path) -> None:
         """save session cookies into local file"""
-        save_dict(file_cookie, dict(self.session.cookies))
+        IO.save_dict(file_cookie, dict(self.session.cookies))
 
     def prepare_headers(self, **kwargs: Any) -> None:
         """set headers for following request"""
@@ -330,7 +330,7 @@ class TestHttp:
         for key, value in cookie_dict.items():
             assert client.session.cookies.get(key) == value
 
-        assert file_del(file_cookie) is True
+        assert IO.file_del(file_cookie) is True
 
     def test_http_requests(self) -> None:
         """test Http virious request methods"""
