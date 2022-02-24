@@ -10,7 +10,7 @@ from dataclasses import dataclass
 import requests
 
 from pyatom.base.chars import hash2s
-from pyatom.base.io import dir_create, dir_del, load_dict, save_dict
+from pyatom.base.io import IO
 from pyatom.config import ConfigManager
 
 
@@ -74,14 +74,14 @@ class BaseStock(ABC):
         self.sep = "__"  # file name seperator
         self.dir_cache = dir_cache
 
-        dir_create(self.dir_cache)
+        IO.dir_create(self.dir_cache)
 
         self.payload: dict[str, str] = {}
 
     def cache_save(self, request_url: str, response_data: dict) -> bool:
         """Save cache response data into local file."""
         file_cache = self.to_cache_file(request_url)
-        save_dict(file_cache, response_data)
+        IO.save_dict(file_cache, response_data)
         return file_cache.is_file()
 
     def cache_get(self, request_url: str) -> dict:
@@ -89,7 +89,7 @@ class BaseStock(ABC):
         cache_id = hash2s(request_url)
         for file in self.dir_cache.glob(self.name + self.sep + "*.*"):
             if cache_id in file.name:
-                return load_dict(file)
+                return IO.load_dict(file)
         return {}
 
     def cache_clear(self) -> bool:
@@ -103,7 +103,7 @@ class BaseStock(ABC):
 
     def cache_del(self) -> bool:
         """Delete cache diretory."""
-        return dir_del(self.dir_cache)
+        return IO.dir_del(self.dir_cache)
 
     def to_cache_file(self, request_url: str) -> Path:
         """Generate random filename corresponding to cache_id and timestamp."""
