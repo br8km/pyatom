@@ -22,7 +22,7 @@ from xml.parsers.expat import ExpatError
 
 from tldextract import extract
 
-from pyatom.base.io import save_list_dict, load_list_dict
+from pyatom.base.io import IO
 from pyatom.base.log import Logger, init_logger
 from pyatom.base.proxy import Proxy
 from pyatom.config import ConfigManager
@@ -122,7 +122,7 @@ class BasePinger:
     @staticmethod
     def load_services(file_service: Path) -> list[Service]:
         """Load list of Service from local file."""
-        service_data = load_list_dict(file_service)
+        service_data = IO.load_list_dict(file_service)
         return [
             Service(
                 url=item.get("url", ""),
@@ -138,7 +138,7 @@ class BasePinger:
     def save_services(file_service: Path, list_service: list[Service]) -> bool:
         """Save list of Service into local file."""
         service_data = [asdict(service) for service in list_service]
-        save_list_dict(file_name=file_service, file_data=service_data)
+        IO.save_list_dict(file_name=file_service, file_data=service_data)
         return file_service.is_file()
 
     @staticmethod

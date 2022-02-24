@@ -14,7 +14,7 @@ import requests
 from requests import Response
 from tqdm import tqdm
 
-from pyatom.base.io import dir_create, file_del
+from pyatom.base.io import IO
 from pyatom.base.log import Logger, init_logger
 from pyatom.config import ConfigManager
 
@@ -111,7 +111,7 @@ class Downloader:
             :resume_download
             :append new chunk to file if present
         """
-        file_del(file_out)
+        IO.file_del(file_out)
 
         if not total_size:
             # http head method to get response headers
@@ -154,7 +154,7 @@ class Downloader:
     def download(self, file_url: str, file_out: Union[Path, str]) -> bool:
         """Smart Download"""
 
-        dir_create(Path(file_out).parent)
+        IO.dir_create(Path(file_out).parent)
 
         response = self._head(file_url)
         if response is None:
@@ -218,15 +218,17 @@ class TestDownloader:
 
         file_tmp = Path(self.dir_app, "ranges.tmp")
         assert app.download_ranges(file_url=file_url_ranges, file_out=file_tmp)
-        file_del(file_tmp)
+        IO.file_del(file_tmp)
         assert file_tmp.is_file() is False
 
         file_url_direct = "https://www.google.com/images/branding/googlelogo/2x/googlelogo_color_92x30dp.png"
         file_url_direct = "https://raw.githubusercontent.com/ableco/test-files/master/images/test-image-png_4032x3024.png"
         file_tmp = Path(self.dir_app, "direct.tmp")
         assert app.download_direct(file_url=file_url_direct, file_out=file_tmp)
-        file_del(file_tmp)
+        IO.file_del(file_tmp)
         assert file_tmp.is_file() is False
+
+        # download bytes and unzip not tested yet as of 2022-02-24
 
 
 if __name__ == "__main__":

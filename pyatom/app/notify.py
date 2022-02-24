@@ -12,7 +12,7 @@ from twilio.rest import Client
 from twilio.base.exceptions import TwilioRestException
 
 from pyatom.base.chars import str_rnd
-from pyatom.base.io import dir_create, file_del, save_str
+from pyatom.base.io import IO
 from pyatom.base.log import Logger, init_logger
 from pyatom.client.smtp import MailSender
 from pyatom.config import ConfigManager
@@ -55,7 +55,7 @@ class BaseSender:
         self.logger = logger
 
         self.dir_bak = dir_bak
-        dir_create(self.dir_bak)
+        IO.dir_create(self.dir_bak)
 
     @staticmethod
     def file_str(file_path: Path) -> str:
@@ -251,7 +251,7 @@ class TestNotify:
         """Create temp file as attachment."""
         number = 100
         text = " ".join(str_rnd() for _ in range(number))
-        save_str(file_name=self.file_temp, file_content=text)
+        IO.save_str(file_name=self.file_temp, file_content=text)
         return self.file_temp.is_file()
 
     @pytest.mark.skip(reason="tested okay.")
@@ -273,7 +273,7 @@ class TestNotify:
         )
         email_to = "friend@" + self.config.postfix_domain
         assert postfix.send(notice, email_to=email_to, save=True)
-        file_del(self.file_temp)
+        IO.file_del(self.file_temp)
         assert self.file_temp.is_file() is False
 
         assert postfix.clean_notice() is True
@@ -295,7 +295,7 @@ class TestNotify:
         )
         number_to = "+8613900006666"
         assert twilio.send(notice, number_to=number_to, save=True)
-        file_del(self.file_temp)
+        IO.file_del(self.file_temp)
         assert self.file_temp.is_file() is False
 
         assert twilio.clean_notice() is True
