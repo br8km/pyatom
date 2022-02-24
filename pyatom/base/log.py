@@ -23,7 +23,7 @@ from typing import Optional
 from pytest import LogCaptureFixture
 
 
-__all__ = ("init_logger",)
+__all__ = ("init_logger", "Logger")
 
 
 class SmartFormatter(Formatter):
