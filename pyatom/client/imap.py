@@ -247,7 +247,7 @@ class ImapClient:
         charset = ""
         guess = msg.get_charsets()
         if guess is None:
-            content_type = msg.get("Content-Type", "")
+            content_type = msg.get("Content-Type") or ""
             content_type = content_type.lower().replace('"', "")
             pattern = re.compile(r"(?<=charset=)[\w\-]+")
             result = pattern.search(content_type)

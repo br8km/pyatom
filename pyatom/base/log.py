@@ -47,7 +47,7 @@ class SmartFormatter(Formatter):
         """Init Format."""
         super().__init__(None, self.datefmt, style="%", validate=True)
 
-        self.fmt_orig = self.formats.get("DEFAULT", "")
+        self.fmt_orig = self.formats.get("DEFAULT") or ""
         self.tz_offset = tz_offset
 
     def _converter(self, timestamp: float) -> datetime:

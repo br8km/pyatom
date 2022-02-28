@@ -47,7 +47,7 @@ class Proxy:
         if scheme not in data_type.keys():
             raise ValueError(f"proxy type not supported: `{scheme}`!")
 
-        proxy_type = data_type.get(scheme, 3)
+        proxy_type = data_type.get(scheme) or 3
         addr, port, usr, pwd = "", 80, "", ""
 
         # long proxy format: usr:pwd@addr:port

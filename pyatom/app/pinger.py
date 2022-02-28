@@ -125,11 +125,11 @@ class BasePinger:
         service_data = IO.load_list_dict(file_service)
         return [
             Service(
-                url=item.get("url", ""),
-                geo=item.get("geo", ""),
-                alive=item.get("alive", False),
-                timestamp=item.get("timestamp", 0),
-                error=item.get("error", ""),
+                url=item.get("url") or "",
+                geo=item.get("geo") or "",
+                alive=item.get("alive") or False,
+                timestamp=item.get("timestamp") or 0,
+                error=item.get("error") or "",
             )
             for item in service_data
         ]
@@ -231,7 +231,7 @@ class XMLPinger(BasePinger):
             return False, response_str
 
         if response.get("flerror", True):
-            self.logger.error(response.get("message", ""))
+            self.logger.error(response.get("message"))
             return False, response_str
 
         return True, response_str

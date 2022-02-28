@@ -9,7 +9,7 @@ import platform
 import subprocess
 import gdown
 
-from pyatom.base.io import dir_create, dir_del
+from pyatom.base.io import IO
 
 
 __all__ = ("ACEngine",)
@@ -127,7 +127,7 @@ class TestACEngine:
 
     def test_acengine(self) -> None:
         """Test ACEngine Paraphrase."""
-        assert dir_create(self.dir_ace)
+        assert IO.dir_create(self.dir_ace)
 
         ace = ACEngine(dir_ace=self.dir_ace_str)
         text = "The quick brown fox that jumped over the lazy dog took a nap."
@@ -140,7 +140,7 @@ class TestACEngine:
         list_phrase = ace.paraphrase(text=text, debug=False)
         assert len(list_phrase) > 0
 
-        assert dir_del(self.dir_ace)
+        assert IO.dir_del(self.dir_ace)
 
 
 if __name__ == "__main__":

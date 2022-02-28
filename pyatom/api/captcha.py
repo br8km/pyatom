@@ -68,7 +68,7 @@ class TwoCaptcha(AbsCaptcha):
             if response and response.status_code == 200:
                 data = response.json()
                 if data.get("status") == 1:
-                    return float(data.get("request", -1))
+                    return float(data.get("request") or -1)
         return -1
 
     def recaptcha(self, site_key: str, page_url: str, retry: int = 3) -> str:

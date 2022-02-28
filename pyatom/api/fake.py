@@ -58,7 +58,7 @@ class FakeFace:
         base = "https://fakeface.rest/face/json?"
         url = f"{base}{urlencode(params)}"
         data = self.http_get(url)
-        image_url = data.get("image_url", "")
+        image_url = data.get("image_url") or ""
         if image_url and isinstance(image_url, str):
             image_name = os.path.basename(image_url)
             pattern = re.compile(r"(male|female)_([\d]+)_[\w]+?\.")

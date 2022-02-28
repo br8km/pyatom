@@ -261,7 +261,7 @@ class Pixabay(BaseStock):
             ],
             "order": ["popular", "latest"],
         }
-        return data.get(key, [])
+        return data.get(key) or []
 
     def add_payload(self, **params: Union[str, int, bool]) -> None:
         """Generate request url string."""
@@ -347,8 +347,8 @@ class Pixabay(BaseStock):
     @staticmethod
     def parse_totals(response_data: dict) -> tuple[int, int]:
         """Parse response data total and total hits number."""
-        total = response_data.get("total", 0)
-        total_hits = response_data.get("totalHits", 0)
+        total = response_data.get("total") or 0
+        total_hits = response_data.get("totalHits") or 0
         return total, total_hits
 
     @staticmethod
@@ -360,20 +360,20 @@ class Pixabay(BaseStock):
         if url_type not in valid:
             raise ValueError("Param `url_type` not valid")
 
-        for hit in response_data.get("hits", []):
-            url_image = hit.get(url_type, "")
+        for hit in response_data.get("hits") or []:
+            url_image = hit.get(url_type) or ""
             if not url_image:
                 continue
 
             yield Photo(
-                iid=hit.get("id", ""),
-                type=hit.get("type", ""),
-                tags=hit.get("tags", ""),
-                width=hit.get("imageWidth", 0),
-                height=hit.get("imageHeight", 0),
-                size=hit.get("imageSize", 0),
-                views=hit.get("views", 0),
-                downloads=hit.get("downloads", 0),
+                iid=hit.get("id") or "",
+                type=hit.get("type") or "",
+                tags=hit.get("tags") or "",
+                width=hit.get("imageWidth") or 0,
+                height=hit.get("imageHeight") or 0,
+                size=hit.get("imageSize") or 0,
+                views=hit.get("views") or 0,
+                downloads=hit.get("downloads") or 0,
                 url=url_image,
             )
 
@@ -384,23 +384,23 @@ class Pixabay(BaseStock):
         if video_size not in valid:
             raise ValueError("Param `video_size` not valid")
 
-        for hit in response_data.get("hits", []):
-            videos = hit.get("videos", {})
-            video = videos.get(video_size, {})
+        for hit in response_data.get("hits") or []:
+            videos = hit.get("videos") or {}
+            video = videos.get(video_size) or {}
             if not video:
                 continue
 
             yield Video(
-                iid=hit.get("id", ""),
-                type=hit.get("type", ""),
-                tags=hit.get("tags", ""),
-                duration=hit.get("duration", 0),
-                width=video.get("width", 0),
-                height=video.get("height", 0),
-                size=video.get("size", 0),
-                views=hit.get("views", 0),
-                downloads=hit.get("downloads", 0),
-                url=video.get("url", ""),
+                iid=hit.get("id") or "",
+                type=hit.get("type") or "",
+                tags=hit.get("tags") or "",
+                duration=hit.get("duration") or 0,
+                width=video.get("width") or 0,
+                height=video.get("height") or 0,
+                size=video.get("size") or 0,
+                views=hit.get("views") or 0,
+                downloads=hit.get("downloads") or 0,
+                url=video.get("url") or "",
             )
 
     @staticmethod

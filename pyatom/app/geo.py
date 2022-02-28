@@ -28,17 +28,17 @@ def geoip(ipaddr: str, file_geo: Path) -> Address:
     latitude = res.location.latitude
     longitude = res.location.longitude
     coordinate = (
-        latitude if latitude else 0.0,
-        longitude if longitude else 0.0,
+        latitude or 0.0,
+        longitude or 0.0,
     )
     return Address(
         ipaddr=ipaddr,
-        country=country if country else "",
-        state=state if state else "",
-        city=city if city else "",
-        postal=postal if postal else "",
+        country=country or "",
+        state=state or "",
+        city=city or "",
+        postal=postal or "",
         coordinate=coordinate,
-        time_zone=time_zone if time_zone else "",
+        time_zone=time_zone or "",
         street="",
         utc_offset=offset,
     )

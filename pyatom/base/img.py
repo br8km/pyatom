@@ -111,8 +111,8 @@ class ReHasher(AbsImage):
             return file_new, self.read_bytes(file_new)
 
         if image.format == "GIF":
-            duration = image.info.get("duration", 100)
-            loop = image.info.get("loop", 1)
+            duration = image.info.get("duration") or 100
+            loop = image.info.get("loop") or 1
             list_frame = []
             for frame in ImageSequence.Iterator(image):
                 frame = frame.convert("RGB")
