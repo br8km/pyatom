@@ -6,12 +6,12 @@
 """
 
 import os
-from pathlib import Path
 from urllib.parse import urlencode
 
 import requests
 import regex as re
 
+from pyatom import DIR_DEBUG
 from pyatom.config import ConfigManager
 
 
@@ -72,8 +72,7 @@ class FakeFace:
 class TestFake:
     """TestCase for FakeFace."""
 
-    dir_app = Path(__file__).parent
-    file_config = Path(dir_app.parent.parent, "protect", "config.json")
+    file_config = DIR_DEBUG.parent / "protect" / "config.json"
     config = ConfigManager().load(file_config)
 
     def test_fakeface(self) -> None:

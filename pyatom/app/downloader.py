@@ -16,6 +16,7 @@ from tqdm import tqdm
 
 from pyatom.base.io import IO
 from pyatom.base.log import Logger, init_logger
+from pyatom import DIR_DEBUG
 from pyatom.config import ConfigManager
 
 
@@ -200,8 +201,7 @@ class Downloader:
 class TestDownloader:
     """Test Downloader."""
 
-    dir_app = Path(__file__).parent
-    file_config = Path(dir_app.parent.parent, "protect", "config.json")
+    file_config = DIR_DEBUG.parent / "protect" / "config.json"
     config = ConfigManager().load(file_config)
 
     def test_downloader(self) -> None:
@@ -216,16 +216,16 @@ class TestDownloader:
         file_url_ranges = "http://ipv4.download.thinkbroadband.com/10MB.zip"
         file_url_ranges = "http://s3.amazonaws.com/alexa-static/top-1m.csv.zip"
 
-        file_tmp = Path(self.dir_app, "ranges.tmp")
+        file_tmp = DIR_DEBUG / "ranges.tmp"
         assert app.download_ranges(file_url=file_url_ranges, file_out=file_tmp)
-        IO.file_del(file_tmp)
+        file_tmp.unlink(missing_ok=True)
         assert file_tmp.is_file() is False
 
         file_url_direct = "https://www.google.com/images/branding/googlelogo/2x/googlelogo_color_92x30dp.png"
         file_url_direct = "https://raw.githubusercontent.com/ableco/test-files/master/images/test-image-png_4032x3024.png"
-        file_tmp = Path(self.dir_app, "direct.tmp")
+        file_tmp = DIR_DEBUG / "direct.tmp"
         assert app.download_direct(file_url=file_url_direct, file_out=file_tmp)
-        IO.file_del(file_tmp)
+        file_tmp.unlink(missing_ok=True)
         assert file_tmp.is_file() is False
 
         # download bytes and unzip not tested yet as of 2022-02-24

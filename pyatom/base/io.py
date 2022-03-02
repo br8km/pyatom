@@ -8,6 +8,9 @@ from typing import List, Union
 
 import orjson
 
+from pyatom import DIR_DEBUG
+
+
 __all__ = ("IO",)
 
 
@@ -181,25 +184,25 @@ class IO:
 class TestIO:
     """Test IO Operation."""
 
-    dir_root = Path(__file__).parent
     io = IO()
+    dir_test = DIR_DEBUG
 
     def test_dirs(self) -> None:
         """Test directory operation."""
-        dir_test = Path(self.dir_root, "test", "child")
-        dir_test_str = str(dir_test.absolute())
+        dir_child = self.dir_test / "child"
+        dir_child_str = str(dir_child)
 
-        assert self.io.dir_create(dir_name=dir_test)
-        assert self.io.dir_del(dir_name=dir_test, remain_root=True)
-        assert self.io.dir_del(dir_name=dir_test)
+        assert self.io.dir_create(dir_name=dir_child)
+        assert self.io.dir_del(dir_name=dir_child, remain_root=True)
+        assert self.io.dir_del(dir_name=dir_child)
 
-        assert self.io.dir_create(dir_name=dir_test_str)
-        assert self.io.dir_del(dir_name=dir_test_str, remain_root=True)
-        assert self.io.dir_del(dir_name=dir_test_str)
+        assert self.io.dir_create(dir_name=dir_child_str)
+        assert self.io.dir_del(dir_name=dir_child_str, remain_root=True)
+        assert self.io.dir_del(dir_name=dir_child_str)
 
     def test_save_load_str(self) -> None:
         """test save_str, load_str"""
-        file = Path(self.dir_root, "test.file")
+        file = Path(self.dir_test, "test.file")
 
         content = "content"
         self.io.save_str(file, content)
@@ -210,7 +213,7 @@ class TestIO:
 
     def test_save_load_bytes(self) -> None:
         """test save_bytes, load_bytes"""
-        file = Path(self.dir_root, "test.file")
+        file = Path(self.dir_test, "test.file")
 
         content = b"content"
         self.io.save_bytes(file, content)
@@ -220,7 +223,7 @@ class TestIO:
 
     def test_save_load_line(self) -> None:
         """test save_line, load_line"""
-        file = Path(self.dir_root, "test.file")
+        file = Path(self.dir_test, "test.file")
 
         content = ["content"]
         self.io.save_line(file, content)
@@ -230,7 +233,7 @@ class TestIO:
 
     def test_save_load_list(self) -> None:
         """test save_list, load_list"""
-        file = Path(self.dir_root, "test.file")
+        file = Path(self.dir_test, "test.file")
 
         content = [random.randint(0, 999) for _ in range(100)]
         self.io.save_list(file, content)
@@ -246,7 +249,7 @@ class TestIO:
 
     def test_save_load_dict(self) -> None:
         """test save_dict, load_dict"""
-        file = Path(self.dir_root, "test.file")
+        file = Path(self.dir_test, "test.file")
 
         content = {"name": "Ben", "age": 24, "float": 123.456}
         self.io.save_dict(file, content)
@@ -262,7 +265,7 @@ class TestIO:
 
     def test_save_load_list_list(self) -> None:
         """test save_list_list, load_list_list"""
-        file = Path(self.dir_root, "test.file")
+        file = Path(self.dir_test, "test.file")
 
         content = [[random.randint(0, 999) for _ in range(100)] for _ in range(10)]
         self.io.save_list_list(file, content)
@@ -278,7 +281,7 @@ class TestIO:
 
     def test_save_load_list_dict(self) -> None:
         """test save_list_dict, load_list_dict"""
-        file = Path(self.dir_root, "test.file")
+        file = Path(self.dir_test, "test.file")
 
         content = [{"name": "Ben", "age": 24, "float": 123.456} for _ in range(10)]
         self.io.save_list_dict(file, content)

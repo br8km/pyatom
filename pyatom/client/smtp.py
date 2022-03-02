@@ -12,6 +12,7 @@ from email.utils import make_msgid
 from email import encoders
 
 from pyatom.config import ConfigManager
+from pyatom import DIR_DEBUG
 
 __all__ = ("MailSender",)
 
@@ -175,42 +176,38 @@ class MailSender:
 class TestSMTP:
     """TestCase for SMTP Main Sender."""
 
-    dir_app = Path(__file__).parent
-    file_config = Path(dir_app.parent.parent, "protect", "config.json")
+    file_config = DIR_DEBUG.parent / "protect" / "config.json"
     config = ConfigManager().load(file_config)
 
-    file_temp = Path(dir_app, "temp.file")
+    file_temp = DIR_DEBUG / "temp.smtp.file"
 
-    def prepare_temp_file(self) -> bool:
+    client = MailSender(
+        host=config.postfix_domain,
+        port=config.postfix_port_smtp,
+        usr=config.postfix_usr,
+        pwd=config.postfix_pwd,
+        use_ssl=config.postfix_ssl,
+    )
+
+    def test_prepare_temp_file(self) -> None:
         """Generate temp file."""
         with open(self.file_temp, "w", encoding="utf8") as file:
             file.write("hello world")
-        return self.file_temp.is_file()
+        assert self.file_temp.is_file()
 
-    def delete_temp_file(self) -> bool:
-        """Delete temp file."""
-        self.file_temp.unlink(missing_ok=True)
-        return self.file_temp.is_file() is False
-
-    def test_mail_sender(self) -> None:
-        """Test Mail Sender."""
-        client = MailSender(
-            host=self.config.postfix_domain,
-            port=self.config.postfix_port_smtp,
-            usr=self.config.postfix_usr,
-            pwd=self.config.postfix_pwd,
-            use_ssl=self.config.postfix_ssl,
-        )
-
+    def test_send_text_message(self) -> None:
+        """Test Mail Sender for text message."""
         subject = "subject"
         body = "body"
         html_text = ""
         sender_name = "Support"
         sender_email = "support@" + self.config.postfix_domain
+        print(sender_email)
         recipient = "friend@" + self.config.postfix_domain
+        print(recipient)
 
         # plain text message
-        client.set_message(
+        self.client.set_message(
             plain_text=body,
             html_text=html_text,
             subject=subject,
@@ -220,14 +217,23 @@ class TestSMTP:
             list_attachment=[],
             id_seed="",
         )
-        client.connect()
-        client.send(recipient)
+        self.client.connect()
+        self.client.send(recipient)
 
+    def test_send_html_message(self) -> None:
+        """Test Mail Sender for html message."""
+        subject = "subject"
+        body = "body"
+        html_text = ""
+        sender_name = "Support"
+        sender_email = "support@" + self.config.postfix_domain
+        print(sender_email)
+        recipient = "friend@" + self.config.postfix_domain
+        print(recipient)
         # html text message
-        assert self.prepare_temp_file()
 
         html_text = f"<html><head><title>{subject}</title></head><body><div align='center'>{body}</div></body></html>"
-        client.set_message(
+        self.client.set_message(
             plain_text=body,
             html_text=html_text,
             subject=subject,
@@ -237,10 +243,13 @@ class TestSMTP:
             list_attachment=[self.file_temp],
             id_seed="",
         )
-        client.connect()
-        client.send(recipient)
+        self.client.connect()
+        self.client.send(recipient)
 
-        assert self.delete_temp_file()
+    def test_cleanup(self) -> None:
+        """Test clean up temp file."""
+        self.file_temp.unlink(missing_ok=True)
+        assert self.file_temp.is_file() is False
 
 
 if __name__ == "__main__":

@@ -10,6 +10,9 @@ from typing import Any, Union
 
 import arrow
 
+from pyatom import DIR_DEBUG
+
+
 __all__ = ("Debugger",)
 
 
@@ -86,7 +89,7 @@ class TestDebugger:
     """Test Debugger."""
 
     name = "test"
-    debugger = Debugger(path=Path(__file__).parent, name=name)
+    debugger = Debugger(path=DIR_DEBUG, name=name)
 
     def test_debugger(self) -> None:
         """Test debugger methods."""

@@ -13,6 +13,9 @@ import imageio
 import numpy as np
 
 
+from pyatom import DIR_DEBUG
+
+
 __all__ = ("ReHasher",)
 
 
@@ -147,6 +150,7 @@ class TestRehash:
     frames = 10
 
     rehasher = ReHasher()
+    dir_test = DIR_DEBUG
 
     def gen_image(self) -> ImageObj:
         """Generate new image with random color."""
@@ -156,8 +160,8 @@ class TestRehash:
 
     def test_png_rehash(self) -> None:
         """Test rehash png image."""
-        file_old = Path(Path(__file__).parent, "old.png")
-        file_new = Path(Path(__file__).parent, "new.png")
+        file_old = self.dir_test / "old.png"
+        file_new = self.dir_test / "new.png"
 
         file_old.unlink(missing_ok=True)
         file_new.unlink(missing_ok=True)
@@ -187,8 +191,8 @@ class TestRehash:
 
     def test_jpg_rehash(self) -> None:
         """Test rehash jpg image."""
-        file_old = Path(Path(__file__).parent, "old.jpg")
-        file_new = Path(Path(__file__).parent, "new.jpg")
+        file_old = self.dir_test / "old.jpg"
+        file_new = self.dir_test / "new.jpg"
 
         file_old.unlink(missing_ok=True)
         file_new.unlink(missing_ok=True)
@@ -217,8 +221,8 @@ class TestRehash:
 
     def test_gif_rehash(self) -> None:
         """Test rehash gif image."""
-        file_old = Path(Path(__file__).parent, "old.gif")
-        file_new = Path(Path(__file__).parent, "new.gif")
+        file_old = self.dir_test / "old.gif"
+        file_new = self.dir_test / "new.gif"
 
         file_old.unlink(missing_ok=True)
         file_new.unlink(missing_ok=True)

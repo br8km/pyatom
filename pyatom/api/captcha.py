@@ -4,7 +4,6 @@
 
 import time
 import base64
-from pathlib import Path
 from abc import ABC, abstractmethod
 from urllib.parse import urlencode
 
@@ -12,6 +11,8 @@ import requests
 
 from pyatom.base.log import Logger, init_logger
 from pyatom.config import ConfigManager
+
+from pyatom import DIR_DEBUG
 
 
 __all__ = ("TwoCaptcha",)
@@ -163,8 +164,7 @@ class TwoCaptcha(AbsCaptcha):
 class TestCaptcha:
     """Test Captcha APIs."""
 
-    dir_app = Path(__file__).parent
-    file_config = Path(dir_app.parent.parent, "protect", "config.json")
+    file_config = DIR_DEBUG.parent / "protect" / "config.json"
     config = ConfigManager().load(file_config)
 
     logger = init_logger(name="test")

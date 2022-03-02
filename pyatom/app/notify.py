@@ -16,6 +16,7 @@ from pyatom.base.io import IO
 from pyatom.base.log import Logger, init_logger
 from pyatom.client.smtp import MailSender
 from pyatom.config import ConfigManager
+from pyatom import DIR_DEBUG
 
 
 __all__ = (
@@ -240,12 +241,11 @@ class TwilioSender(BaseSender):
 class TestNotify:
     """TestCase for Notify."""
 
-    dir_app = Path(__file__).parent
-    file_config = Path(dir_app.parent.parent, "protect", "config.json")
+    file_config = DIR_DEBUG.parent / "protect" / "config.json"
     config = ConfigManager().load(file_config)
 
     logger = init_logger(name="test")
-    file_temp = Path(dir_app, "temp.file")
+    file_temp = DIR_DEBUG / "temp.notify.file"
 
     def create_temp_file(self) -> bool:
         """Create temp file as attachment."""
@@ -265,7 +265,7 @@ class TestNotify:
             pwd=self.config.postfix_pwd,
             ssl=self.config.postfix_ssl,
             logger=self.logger,
-            dir_bak=self.dir_app,
+            dir_bak=DIR_DEBUG,
         )
         files = [postfix.file_str(self.file_temp)]
         notice = postfix.create_notice(
@@ -287,7 +287,7 @@ class TestNotify:
             token=self.config.twilio_token,
             number=self.config.twilio_number,
             logger=self.logger,
-            dir_bak=self.dir_app,
+            dir_bak=DIR_DEBUG,
         )
         files = [twilio.file_str(self.file_temp)]
         notice = twilio.create_notice(

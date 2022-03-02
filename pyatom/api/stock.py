@@ -12,6 +12,7 @@ import requests
 from pyatom.base.chars import hash2s
 from pyatom.base.io import IO
 from pyatom.config import ConfigManager
+from pyatom import DIR_DEBUG
 
 
 __all__ = ("Pixabay",)
@@ -650,11 +651,10 @@ class WikiMediaCommons(BaseStock):
 class TestStock:
     """TestCase for Stock api wrappers."""
 
-    dir_app = Path(__file__).parent
-    file_config = Path(dir_app.parent.parent, "protect", "config.json")
+    file_config = DIR_DEBUG.parent / "protect" / "config.json"
     config = ConfigManager().load(file_config)
 
-    dir_cache = Path(dir_app, "cache")
+    dir_cache = DIR_DEBUG / "cache"
 
     def test_base_cache(self) -> None:
         """Test BaseStock from Pixabay."""

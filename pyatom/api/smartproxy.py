@@ -4,7 +4,6 @@
 
 import time
 import threading
-from pathlib import Path
 from ipaddress import ip_address
 from typing import Optional, Union
 
@@ -15,6 +14,7 @@ from requests import Response, Session, RequestException
 from pyatom.base.chars import str_rnd
 from pyatom.base.log import Logger, init_logger
 from pyatom.config import ConfigManager
+from pyatom import DIR_DEBUG
 
 
 __all__ = ("SmartProxy",)
@@ -227,8 +227,7 @@ class SmartProxy:
 class TestSmartProxy:
     """Test SmartProxy."""
 
-    dir_app = Path(__file__).parent
-    file_config = Path(dir_app.parent.parent, "protect", "config.json")
+    file_config = DIR_DEBUG.parent / "protect" / "config.json"
     config = ConfigManager().load(file_config)
 
     logger = init_logger(name="test")

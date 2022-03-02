@@ -8,6 +8,7 @@ from geoip2.database import Reader
 
 from pyatom.base.timer import utc_offset
 from pyatom.base.structure import Address
+from pyatom import DIR_DEBUG
 
 
 __all__ = (
@@ -50,7 +51,7 @@ class TestGeoip:
     ip_addr = "172.245.255.158"
 
     dir_app = Path(__file__).parent
-    file_geo = Path(dir_app.parent.parent, "data", "GeoLite2-City.mmdb")
+    file_geo = DIR_DEBUG.parent / "data" / "GeoLite2-City.mmdb"
 
     def test_geoip(self) -> None:
         """Test geoip."""

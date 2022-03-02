@@ -5,10 +5,10 @@
 import torch
 from transformers import PegasusForConditionalGeneration, PegasusTokenizer
 
-__all__ = ("Spinner",)
+__all__ = ("Pegasus",)
 
 
-class Spinner:
+class Pegasus:
 
     """
     Pegasus Paraphrase Generator:
@@ -69,9 +69,9 @@ class TestSpinner:
     """TestCase for Spinner."""
 
     @staticmethod
-    def test_spinner() -> None:
-        """Test Spinner."""
-        app = Spinner()
+    def test_pegasus() -> None:
+        """Test Pegasus."""
+        app = Pegasus()
         num_returns = 10
         num_beams = 10
 

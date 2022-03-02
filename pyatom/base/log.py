@@ -22,6 +22,8 @@ from typing import Optional
 
 from pytest import LogCaptureFixture
 
+from pyatom import DIR_DEBUG
+
 
 __all__ = ("init_logger", "Logger")
 
@@ -111,6 +113,7 @@ class TestLogger:
 
     name = "test"
     flag = "hello world"
+    dir_test = DIR_DEBUG
 
     def test_logger(self, caplog: LogCaptureFixture) -> None:
         """Test logger method."""
@@ -143,8 +146,8 @@ class TestLogger:
 
     def test_logger_file(self, caplog: LogCaptureFixture) -> None:
         """Test logger file."""
-        file_temp = Path(Path(__file__).parent, self.name + ".log")
-        logger = init_logger(name=self.name, file=file_temp)
+        file_log = self.dir_test / f"{self.name}.log"
+        logger = init_logger(name=self.name, file=file_log)
 
         logger.info(self.flag)
         record = caplog.records[-1]
@@ -152,7 +155,7 @@ class TestLogger:
         assert record.levelno == INFO
 
         logger.handlers = []
-        file_temp.unlink(missing_ok=True)
+        file_log.unlink(missing_ok=True)
 
 
 if __name__ == "__main__":

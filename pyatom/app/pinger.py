@@ -26,6 +26,7 @@ from pyatom.base.io import IO
 from pyatom.base.log import Logger, init_logger
 from pyatom.base.proxy import Proxy
 from pyatom.config import ConfigManager
+from pyatom import DIR_DEBUG
 
 
 __all__ = (
@@ -323,8 +324,7 @@ class XMLPinger(BasePinger):
 class TestPinger:
     """TestCase for Pinger."""
 
-    dir_app = Path(__file__).parent
-    file_config = Path(dir_app.parent.parent, "protect", "config.json")
+    file_config = DIR_DEBUG.parent / "protect" / "config.json"
     config = ConfigManager().load(file_config)
 
     logger = init_logger(name="test")
@@ -348,7 +348,7 @@ class TestPinger:
         assert pinger.normalize("http://bing.com/") == "http://bing.com"
 
         list_service = [pinger.to_service(url) for url in self.list_service_url]
-        file_service = Path(self.dir_app, "service.json")
+        file_service = DIR_DEBUG / "pinger.service.json"
         pinger.save_services(file_service, list_service)
         assert file_service.is_file()
         assert list_service == pinger.load_services(file_service)

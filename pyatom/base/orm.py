@@ -18,6 +18,8 @@ from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import scoped_session, sessionmaker
 from sqlalchemy import Column, Integer, String, Boolean
 
+from pyatom import DIR_DEBUG
+
 
 __all__ = ("Database",)
 
@@ -359,11 +361,11 @@ class TableDomain(Base):
 class TestDatabase:
     """Test Database ORM Operation."""
 
-    dir_root = Path(__file__).parent
+    dir_test = DIR_DEBUG
 
     def test_orm_sqlite(self) -> None:
         """test orm for sqlite3 database."""
-        db_file = Path(self.dir_root, "db.sqlite")
+        db_file = Path(self.dir_test, "db.sqlite")
         db_file.unlink(missing_ok=True)
 
         orm = Sqlite(db_file=db_file, echo=True)
