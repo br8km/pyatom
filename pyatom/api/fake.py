@@ -11,7 +11,7 @@ from urllib.parse import urlencode
 import requests
 import regex as re
 
-from pyatom import DIR_DEBUG
+from pyatom.config import DIR_DEBUG
 from pyatom.config import ConfigManager
 
 

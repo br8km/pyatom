@@ -13,7 +13,7 @@ import imageio
 import numpy as np
 
 
-from pyatom import DIR_DEBUG
+from pyatom.config import DIR_DEBUG
 
 
 __all__ = ("ReHasher",)

@@ -18,7 +18,7 @@ import socks
 from pyatom.base.debug import Debugger
 from pyatom.base.proxy import Proxy
 from pyatom.config import ConfigManager
-from pyatom import DIR_DEBUG
+from pyatom.config import DIR_DEBUG
 
 
 __all__ = ("PostfixImap",)

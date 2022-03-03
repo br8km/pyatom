@@ -18,7 +18,7 @@ from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import scoped_session, sessionmaker
 from sqlalchemy import Column, Integer, String, Boolean
 
-from pyatom import DIR_DEBUG
+from pyatom.config import DIR_DEBUG
 
 
 __all__ = ("Database",)

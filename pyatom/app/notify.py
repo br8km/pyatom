@@ -16,7 +16,7 @@ from pyatom.base.io import IO
 from pyatom.base.log import Logger, init_logger
 from pyatom.client.smtp import MailSender
 from pyatom.config import ConfigManager
-from pyatom import DIR_DEBUG
+from pyatom.config import DIR_DEBUG
 
 
 __all__ = (

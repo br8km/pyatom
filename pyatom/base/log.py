@@ -22,7 +22,7 @@ from typing import Optional
 
 from pytest import LogCaptureFixture
 
-from pyatom import DIR_DEBUG
+from pyatom.config import DIR_DEBUG
 
 
 __all__ = ("init_logger", "Logger")

@@ -8,7 +8,7 @@ from typing import List, Union
 
 import orjson
 
-from pyatom import DIR_DEBUG
+from pyatom.config import DIR_DEBUG
 
 
 __all__ = ("IO",)

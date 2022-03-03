@@ -16,7 +16,7 @@ from tqdm import tqdm
 
 from pyatom.base.io import IO
 from pyatom.base.log import Logger, init_logger
-from pyatom import DIR_DEBUG
+from pyatom.config import DIR_DEBUG
 from pyatom.config import ConfigManager
 
 

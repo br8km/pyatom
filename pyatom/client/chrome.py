@@ -48,7 +48,7 @@ from pyatom.base.structure import Address
 from pyatom.base.debug import Debugger
 from pyatom.config import ConfigManager
 from pyatom.app.downloader import Downloader as HttpDownloader
-from pyatom import DIR_DEBUG
+from pyatom.config import DIR_DEBUG
 
 
 __all__ = (

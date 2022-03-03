@@ -12,7 +12,8 @@ from email.utils import make_msgid
 from email import encoders
 
 from pyatom.config import ConfigManager
-from pyatom import DIR_DEBUG
+from pyatom.config import DIR_DEBUG
+
 
 __all__ = ("MailSender",)
 

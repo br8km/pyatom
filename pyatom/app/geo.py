@@ -8,7 +8,7 @@ from geoip2.database import Reader
 
 from pyatom.base.timer import utc_offset
 from pyatom.base.structure import Address
-from pyatom import DIR_DEBUG
+from pyatom.config import DIR_DEBUG
 
 
 __all__ = (

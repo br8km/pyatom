@@ -10,7 +10,7 @@ from typing import Any, Union
 
 import arrow
 
-from pyatom import DIR_DEBUG
+from pyatom.config import DIR_DEBUG
 
 
 __all__ = ("Debugger",)
