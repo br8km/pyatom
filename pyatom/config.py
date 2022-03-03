@@ -6,9 +6,14 @@ from dataclasses import dataclass, asdict
 from pyatom.base.io import IO
 
 
+DIR_DEBUG = Path(__file__).parent.parent / "debug"
+
+DIR_DEBUG.mkdir(parents=True, exist_ok=True)
+
 __all__ = (
     "Config",
     "ConfigManager",
+    "DIR_DEBUG",
 )
 
 
@@ -88,8 +93,8 @@ class TestConfig:
 
     dir_app = Path(__file__).parent
 
-    file_config = Path(dir_app.parent, "protect", "config.json")
-    file_blank = Path(dir_app.parent, "data", "example.config.json")
+    file_config = DIR_DEBUG.parent / "protect" / "config.json"
+    file_example = DIR_DEBUG.parent / "data" / "example.config.json"
 
     def test_config_manager(self) -> None:
         """Test ConfigManger."""
@@ -97,7 +102,7 @@ class TestConfig:
         config = app.load(self.file_config)
         assert isinstance(config, Config)
         blank = app.new()
-        app.save(config=blank, file_config=self.file_blank)
+        app.save(config=blank, file_config=self.file_example)
 
 
 if __name__ == "__main__":
