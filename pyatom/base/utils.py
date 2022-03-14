@@ -83,12 +83,12 @@ class TestUtils:
         """Test split list of string or integer."""
         number = 5
         list_int = [random.randint(0, 9) for _ in range(10)]
-        group_int = split_list_int(list_int, number=number)
+        group_int = split_list_int(list_obj=list_int, number=number)
         assert len(group_int[0]) == number
         assert len(group_int) * number <= len(list_int)
 
         list_str = [str(random.randint(0, 9)) for _ in range(10)]
-        group_str = split_list_str(list_str, number=number)
+        group_str = split_list_str(list_obj=list_str, number=number)
         assert len(group_str[0]) == number
         assert len(group_str) * number <= len(list_str)
 

@@ -8,8 +8,6 @@ from typing import List, Union
 
 import orjson
 
-from pyatom.config import DIR_DEBUG
-
 
 __all__ = ("IO",)
 
@@ -185,7 +183,7 @@ class TestIO:
     """Test IO Operation."""
 
     io = IO()
-    dir_test = DIR_DEBUG
+    dir_test = Path(__file__).parent / "test"
 
     def test_dirs(self) -> None:
         """Test directory operation."""
@@ -288,6 +286,10 @@ class TestIO:
         assert file.is_file()
         assert self.io.load_list_dict(file) == content
         assert self.io.file_del(file)
+
+    def test_cleanup(self) -> None:
+        """Test clean up test dir."""
+        assert self.io.dir_del(dir_name=self.dir_test)
 
 
 if __name__ == "__main__":

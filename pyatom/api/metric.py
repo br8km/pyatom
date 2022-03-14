@@ -73,10 +73,10 @@ class DomDetailer:
         params = self.params
         params["domain"] = domain
         params["majesticChoice"] = majestic_choice
-        url = f"http://domdetailer.com/api/checkDomain.php?{params}"
+        url = "http://domdetailer.com/api/checkDomain.php"
         resp = requests.post(url, data=params)
         self.logger.info("<%d>[%d] - %s", resp.status_code, len(resp.text), resp.url)
-        if resp and resp.status_code == 200:
+        if resp is not None and resp.status_code == 200:
             data = resp.json()
             if isinstance(data, dict):
                 if debug:
