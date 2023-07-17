@@ -82,8 +82,8 @@ class Cache:
 
     # --- cache for dict of dict
 
-    @classmethod
-    def prune_dict_dict(cls, data: dict[str, dict], seconds: int) -> dict[str, dict]:
+    @staticmethod
+    def prune_dict_dict(data: dict[str, dict], seconds: int) -> dict[str, dict]:
         """Prune dict of dict."""
         point = time.time() - seconds
         remain: dict[str, dict] = {}
