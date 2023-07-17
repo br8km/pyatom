@@ -18,7 +18,6 @@ class Cache:
     @staticmethod
     def has_cache(file: Path, seconds: int) -> bool:
         """Has cached file for seconds or Not."""
-        assert seconds > 0
         return bool(
             file.is_file()
             and file.stat().st_mtime > time.time() - seconds
@@ -27,7 +26,6 @@ class Cache:
     @staticmethod
     def prune_cache(file: Path, seconds: int = 0) -> None:
         """Prune cache file expired out of seconds."""
-        assert seconds >= 0
         point = time.time() - seconds
         if file.is_file() and file.stat().st_mtime < point:
             file.unlink()
@@ -35,7 +33,6 @@ class Cache:
     @staticmethod
     def prune_caches(dir: Path, seconds: int = 0) -> None:
         """Prune cache files expired out of seconds."""
-        assert seconds >= 0
         point = time.time() - seconds
         for fp in dir.iterdir():
             if fp.is_file() and fp.stat().st_mtime < point:
